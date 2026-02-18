@@ -1,0 +1,8 @@
+1. 開一個terminal，cd到你的資料夾位置，複製下面的指令貼上去跑: 
+uvicorn main:app --host 0.0.0.0 --port 8000
+
+2. 開另外一個terminal，複製下面這行指令貼上去跑:
+cloudflared tunnel --url http://localhost:8000
+
+admin terminal web:
+http://localhost:8000/admin

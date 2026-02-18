@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工業大亨 (Industrial Oligarchs)</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+
+    <div id="news-ticker-bar" class="hidden">
+        <div class="ticker-label">最新快訊</div>
+        <div class="ticker-content" id="ticker-text">正在載入新聞數據...</div>
+    </div>
+
+    <div id="news-modal-overlay" class="hidden" onclick="closeNewsModal()">
+        <div class="news-modal" onclick="event.stopPropagation()">
+            <span class="close-btn" onclick="closeNewsModal()">&times;</span>
+            <h1 id="modal-title">新聞標題</h1>
+            <hr>
+            <p id="modal-desc">新聞內容...</p>
+            <div class="news-effect-box">
+                <strong style="color: #f1c40f;">⚡ 當前影響：</strong><br>
+                <span id="modal-effect" style="font-size: 1.1em;">影響說明</span>
+            </div>
+            <div class="news-phase-indicator">(您可以關閉此視窗查看庫存)</div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <div id="login-section" class="card">
+        <h2 style="text-align: center; color: #f1c40f;">工業大亨<br><small style="font-size: 0.6em; color: #aaa;">Industrial Oligarchs</small></h2>
+        <input type="text" id="player-name" placeholder="請輸入公司名稱 (Company Name)">
+        <button class="btn" onclick="register()">建立公司 / 開始遊戲</button>
+    </div>
+
+    <div id="game-ui" class="hidden">
+        <div class="card" style="position: sticky; top: 40px; z-index: 100; border-bottom: 2px solid #007bff; margin-top: 0; border-radius: 0 0 8px 8px;">
+            <div class="row">
+                <div>
+                    <h3 id="phase-display" style="margin:0; color: #3498db;">第 1 階段</h3>
+                    <small id="land-display" style="color: #aaa;">土地: 0/5</small>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 0.8em; color: #aaa;">現金資產</div>
+                    <span id="money-display" style="color: #4cd137; font-weight: bold; font-size: 1.4em;">$0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h4 style="margin-top: 0; color: #e67e22; border-bottom: 1px solid #444; padding-bottom: 5px;">📦 倉庫庫存 (Inventory)</h4>
+            <div id="inventory-list" style="min-height: 20px; color: #777; font-style: italic;">(倉庫是空的)</div>
+        </div>
+
+        <div id="action-panel" class="hidden">
+            <div class="card" style="border: 1px solid #f39c12;">
+                <h4 style="margin-top: 0; color: #f39c12;">1. 選擇付款材料 (Payment)</h4>
+                <div style="font-size: 0.8em; color: #aaa; margin-bottom: 10px;">升級或建造工廠時，需在此選擇消耗的原料。</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px;">
+                    <div><label>材料 A</label><select id="pay-mat-1"><option value="">無</option></select></div>
+                    <div><label>材料 B</label><select id="pay-mat-2"><option value="">無</option></select></div>
+                    <div><label>材料 C</label><select id="pay-mat-3"><option value="">無</option></select></div>
+                </div>
+            </div>
+            <div class="card" style="border: 1px solid #7f8c8d;">
+                <h4 style="margin-top: 0; color: #bdc3c7;">🏦 銀行回收 (Bank Liquidation)</h4>
+                <div style="font-size: 0.8em; color: #aaa; margin-bottom: 5px;">急需現金？以市價 85% 快速變現。</div>
+                <div class="row" style="gap: 5px;">
+                    <select id="bank-item" style="flex: 2;"></select>
+                    <input type="number" id="bank-qty" placeholder="數量" min="1" style="flex: 1;">
+                    <button class="btn btn-red" style="flex: 1;" onclick="sellToBank()">出售</button>
+                </div>
+            </div>
+            <div class="card">
+                <h4 style="margin-top: 0;">2. 建設新設施 (Construction)</h4>
+                <button class="btn btn-green" onclick="buildMiner()">建造 T0 採集器 ($500)</button>
+                <button class="btn btn-green" style="margin-top:10px; background:#218838;" onclick="buildFactory()">
+                    建造 T1 加工廠 <br> 
+                    <span style="font-size:0.8em; opacity: 0.9;">(免費! 需消耗 材料A & B 各3個 T0原料)</span>
+                </button>
+            </div>
+            <div class="card">
+                <h4 style="margin-top: 0;">3. 我的設施 (Facilities)</h4>
+                <div id="factory-list"></div>
+            </div>
+        </div>
+
+        <div id="trading-panel" class="card hidden">
+            <h4 style="margin-top: 0; color: #9b59b6;">⚖️ 市場交易所 (Market Exchange)</h4>
+            
+            <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                <button id="mode-market" class="btn" style="background: #9b59b6; flex: 1;" onclick="setTradeMode('MARKET')">一般市場</button>
+                <button id="mode-gov" class="btn" style="background: #34495e; opacity: 0.5; flex: 1;" onclick="setTradeMode('GOV')">政府合約</button>
+            </div>
+
+            <label>交易類型</label>
+            <select id="trade-type">
+                <option value="BID">買入 (BID) - 花錢買貨</option>
+                <option value="ASK">賣出 (ASK) - 賣貨換錢</option>
+            </select>
+            
+            <label>選擇物品</label>
+            <select id="trade-item"></select>
+            
+            <div style="display: flex; gap: 10px;">
+                <div style="flex: 1;">
+                    <label>單價 ($)</label>
+                    <input type="number" id="trade-price" placeholder="出價" min="1">
+                </div>
+                <div style="flex: 1;">
+                    <label>數量</label>
+                    <input type="number" id="trade-qty" placeholder="數量" min="1">
+                </div>
+            </div>
+            
+            <button class="btn" style="background: #9b59b6; margin-top: 15px;" onclick="submitOrder()">提交訂單</button>
+        </div>
+    </div>
+
+    <script src="/static/js/game.js"></script>
+</body>
+</html>
