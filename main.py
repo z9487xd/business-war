@@ -21,7 +21,8 @@ engine.generate_daily_event(1)
 players: Dict[str, PlayerState] = {}
 current_phase = 1
 current_turn = 1
-game_logs: List[str] = []  # 新增：儲存遊戲日誌
+game_logs: List[str] = []  # 儲存遊戲日誌
+final_ranking_data: List[dict] = []  # 新增：儲存最終結算成績
 
 # --- 日誌輔助函式 ---
 def log_event(message: str):
@@ -39,6 +40,7 @@ class BuildModel(BaseModel): player_id: str; target_tier: int = 1; payment_mater
 class UpgradeModel(BaseModel): player_id: str; factory_id: str; payment_materials: List[str] = []
 class BankSellModel(BaseModel): player_id: str; item_id: str; quantity: int
 class DemolishModel(BaseModel): player_id: str; factory_id: str
+class BuildSpecialModel(BaseModel): player_id: str; building_type: str; payment_materials: List[str] = []
 
 @app.get("/")
 async def get_player_ui(request: Request):
@@ -48,7 +50,7 @@ async def get_player_ui(request: Request):
 async def get_admin_dashboard(request: Request):
     return templates.TemplateResponse("admin_dashboard.html", {"request": request})
 
-# --- 新增：Admin 專用資料接口 ---
+# --- Admin 專用資料接口 ---
 @app.get("/admin/data")
 async def get_admin_data():
     player_list = []
@@ -66,7 +68,12 @@ async def get_admin_data():
         "phase": current_phase,
         "turn": current_turn,
         "players": player_list,
-        "logs": game_logs
+        "logs": game_logs,
+        # ==========================================
+        # 這裡修復了 Admin 端看不到市價的問題！
+        # ==========================================
+        "items_meta": config.ITEMS,
+        "market_prices": engine.market_prices
     }
 
 @app.post("/api/register")
@@ -108,6 +115,11 @@ async def get_state(player_id: Optional[str] = None):
     if player_id and player_id in players:
         p = players[player_id]
         response["player"] = p.dict()
+        
+    # 新增：如果遊戲結束(Phase 5)，把最終排名傳給前端
+    if current_phase == 5:
+        response["final_ranking"] = final_ranking_data
+
     return response
 
 @app.post("/api/produce")
@@ -132,6 +144,18 @@ async def build_factory(data: BuildModel):
     
     if not success: raise HTTPException(400, msg)
     log_event(f"{p.name} 建造: {msg}")
+    return {"status": "success", "message": msg}
+
+@app.post("/api/build_special")
+async def build_special(data: BuildSpecialModel):
+    if current_phase != 2: raise HTTPException(400, "非行動階段")
+    if data.player_id not in players: raise HTTPException(404, "Player not found")
+
+    p = players[data.player_id]
+    success, msg = engine.process_build_special(p, data.building_type, data.payment_materials)
+    
+    if not success: raise HTTPException(400, msg)
+    log_event(f"{p.name} 執行特殊建設: {msg}")
     return {"status": "success", "message": msg}
 
 @app.post("/api/upgrade")
@@ -174,6 +198,10 @@ async def sell_to_bank(data: BankSellModel):
 async def place_order(data: TradeModel):
     if current_phase != 3: raise HTTPException(400, "非交易階段")
     if data.player_id not in players: raise HTTPException(404, "Player not found")
+
+    if engine.current_event and engine.current_event.get("type") == "TRADE_BAN":
+        if data.item_id == engine.current_event["target"]:
+            raise HTTPException(400, f"⚠️ 核災恐慌：本回合禁止交易 {config.ITEMS[data.item_id]['label']}！")
     
     p = players[data.player_id]
     order_type = data.type
@@ -216,11 +244,22 @@ async def next_phase():
     if current_phase == 3:
         engine.execute_call_auction(players)
         current_phase = 4
-        log_event("市場撮合與結算完成")
+        log_event("市場撮合完成，進入結算階段")
         
+        # 🌟 新增：呼叫我們剛剛寫的結算機制 (扣稅、事件懲罰)
+        end_turn_logs = engine.process_end_of_turn(players)
+        for l in end_turn_logs:
+            log_event(l)
+            
     elif current_phase == 4:
         for p in players.values():
-            for f in p.factories: f.has_produced = False
+            for f in p.factories: 
+                # 🌟 新增：如果中了停擺懲罰，這回合就不能生產
+                if getattr(f, "is_shutdown", False):
+                    f.has_produced = True  # 設為 True 代表本回合已耗盡
+                    f.is_shutdown = False  # 解除標記
+                else:
+                    f.has_produced = False
         
         current_turn += 1
         engine.generate_daily_event(current_turn)
@@ -234,12 +273,43 @@ async def next_phase():
 
 @app.post("/admin/reset")
 async def reset_game():
-    global players, current_phase, engine, current_turn, game_logs
+    # 新增 final_ranking_data，確保重置時清空成績
+    global players, current_phase, engine, current_turn, game_logs, final_ranking_data
     players = {}
     current_phase = 1
     current_turn = 1
-    game_logs = [] # 清空日誌
+    game_logs = [] 
+    final_ranking_data = [] # 清空成績
     engine = GameEngine()
     engine.generate_daily_event(current_turn)
     log_event("=== 遊戲已重置 ===")
     return {"status": "reset complete"}
+
+@app.post("/admin/end_game")
+async def end_game():
+    global current_phase, final_ranking_data # 加入 global 變數
+    
+    if not players:
+        return {"status": "error", "message": "目前沒有玩家，無法結算。"}
+
+    # 呼叫 GameEngine 的結算函式
+    ranked_players = engine.game_set(players)
+    
+    # 將遊戲階段設為 5，代表「遊戲結束」
+    current_phase = 5
+    
+    # 把格式整理好，存到全域變數裡讓玩家的 API 可以讀取
+    final_ranking_data = [
+        {"name": name, "scores": data} for name, data in ranked_players
+    ]
+    
+    # 把結算結果寫入遊戲日誌，讓大家都能看到
+    log_event("=== 🛑 遊戲已由管理員強制結束，進行最終結算 ===")
+    for rank, p_data in enumerate(final_ranking_data, 1):
+        log_event(f"🏆 第 {rank} 名: {p_data['name']} | 總資產: ${p_data['scores']['total_score']}")
+        
+    return {
+        "status": "success", 
+        "message": "遊戲已結算", 
+        "ranking": final_ranking_data
+    }

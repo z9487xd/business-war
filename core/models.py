@@ -7,6 +7,7 @@ class Factory(BaseModel):
     tier: int           # 0=Miner, 1=Factory T1, etc.
     name: str           # e.g., "T0 Miner", "T1 Factory"
     has_produced: bool = False # Reset this every round
+    is_shutdown: bool = False
 
 class PlayerState(BaseModel):
     id: str

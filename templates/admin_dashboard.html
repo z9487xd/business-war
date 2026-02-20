@@ -5,6 +5,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>全球控制台 (Global Control Room)</title>
     <link rel="stylesheet" href="/static/css/admin.css">
+    <style>
+        /* 針對市場表格容器的客製化滾動條樣式 */
+        .market-scroll-container {
+            max-height: 700px; /* 限制最高高度，超過就會出現滾動條 */
+            overflow-y: auto;  /* 允許垂直滾動 */
+            border: 1px solid #444; 
+            border-radius: 5px; 
+            background: #222;
+        }
+        
+        /* 美化滾動條 */
+        .market-scroll-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        .market-scroll-container::-webkit-scrollbar-track {
+            background: #111; 
+            border-radius: 0 5px 5px 0;
+        }
+        .market-scroll-container::-webkit-scrollbar-thumb {
+            background: #34495e; 
+            border-radius: 4px;
+        }
+        .market-scroll-container::-webkit-scrollbar-thumb:hover {
+            background: #5dade2; 
+        }
+
+        /* 確保表格標題固定在最上方 */
+        #market-table thead th {
+            position: sticky;
+            top: 0;
+            background: #34495e;
+            z-index: 10;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5); /* 加一點陰影讓它更有立體感 */
+        }
+    </style>
 </head>
 <body>
     <div class="panel control-panel">
@@ -17,14 +52,24 @@
         
         <div class="btn-group">
             <button onclick="nextPhase()">>>> 進入下一階段 >>></button>
+            <button onclick="endGame()" style="background: #8e44ad; margin-top: 10px;">結束遊戲與結算</button>
             <button onclick="resetGame()" class="reset">重置遊戲 (RESET)</button>
         </div>
         
         <h3>📊 即時市場價格</h3>
-        <table id="market-table">
-            <thead><tr><th>物品名稱</th><th style="text-align: right;">價格</th></tr></thead>
-            <tbody></tbody>
-        </table>
+        
+        <div class="market-scroll-container">
+            <table id="market-table" style="margin: 0; width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th style="padding: 10px;">物品名稱</th>
+                        <th style="text-align: right; padding: 10px;">價格</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
     </div>
 
     <div class="panel ranking-panel">

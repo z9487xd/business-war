@@ -1,0 +1,194 @@
+{
+  "game_settings": {
+    "initial_money": 15000,
+    "initial_land": 5,
+    "price_fluctuation_limit": 0.50,
+    "bank_buy_ratio": 0.85,
+    "gov_buy_ratio": 1.50
+  },
+  "storage_rules": {
+    "base_storage_limit": 5,
+    "penalty_low": 100,
+    "penalty_mid": 200,
+    "penalty_high": 500,
+    "cp_values": {
+      "0": 0,
+      "1": 3,
+      "2": 6,
+      "3": 12
+    }
+  },
+  "factory_costs": {
+    "build_t1": {
+      "money": 0,
+      "material_tier": 0,
+      "qty_per_type": 3,
+      "unique_types": 2
+    },
+    "upgrade_to_t2": {
+      "money": 5000,
+      "material_tier": 1,
+      "qty_per_type": 5,
+      "unique_types": 2
+    },
+    "upgrade_to_t3_money": 15000
+  },
+  "miner_rules": {
+    "upgrade_rules": {
+      "0": { "req_tier": 1, "qty": 3, "complex": false },
+      "1": { "req_tier": 2, "qty": 3, "complex": false },
+      "2": { "complex": true, "reqs": [{ "tier": 2, "qty": 3 }, { "tier": 1, "qty": 3 }] }
+    },
+    "outputs": {
+      "0": 3,
+      "1": 5,
+      "2": 8,
+      "3": 12
+    }
+  },
+"items": {
+    "silicon": { "tier": 0, "base_price": 500, "label": "Silicon (T0 原料)" },
+    "iron": { "tier": 0, "base_price": 500, "label": "Iron (T0 原料)" },
+    "energy": { "tier": 0, "base_price": 500, "label": "Energy Stone (T0 原料)" },
+
+    "wafer": { "tier": 1, "base_price": 1200, "label": "Standard Wafer (T1 - 矽晶系)", "recipe": { "silicon": 2 } },
+    "beam": { "tier": 1, "base_price": 1200, "label": "Industrial Beam (T1 - 鐵系)", "recipe": { "iron": 2 } },
+    "fuel": { "tier": 1, "base_price": 1200, "label": "Solid Fuel (T1 - 能源系)", "recipe": { "energy": 2 } },
+
+    "processor": { "tier": 2, "base_price": 3000, "label": "Processor (T2 - 矽晶系)", "recipe": { "wafer": 2, "energy": 1 } },
+    "projector": { "tier": 2, "base_price": 3000, "label": "Holo-Projector (T2 - 矽晶系)", "recipe": { "wafer": 1, "fuel": 1, "silicon": 1 } },
+    "scanner": { "tier": 2, "base_price": 3000, "label": "Bio-Scanner (T2 - 矽晶系)", "recipe": { "wafer": 1, "beam": 1, "iron": 1 } },
+
+    "thruster": { "tier": 2, "base_price": 3000, "label": "Ion Thruster (T2 - 鐵系)", "recipe": { "beam": 1, "fuel": 1, "energy": 1 } },
+    "drone": { "tier": 2, "base_price": 3000, "label": "Mining Drone (T2 - 鐵系)", "recipe": { "beam": 1, "wafer": 1, "silicon": 1 } },
+    "chassis": { "tier": 2, "base_price": 3000, "label": "Heavy Chassis (T2 - 鐵系)", "recipe": { "beam": 2, "silicon": 1 } },
+
+    "reactor": { "tier": 2, "base_price": 3000, "label": "Micro Reactor (T2 - 能源系)", "recipe": { "fuel": 2, "iron": 1 } },
+    "laser": { "tier": 2, "base_price": 3000, "label": "High-Energy Laser (T2 - 能源系)", "recipe": { "fuel": 1, "beam": 1, "iron": 1 } },
+    "shield": { "tier": 2, "base_price": 3000, "label": "Magnetic Shield (T2 - 能源系)", "recipe": { "fuel": 1, "wafer": 1, "silicon": 1 } },
+
+    "quantum": { "tier": 3, "base_price": 8000, "label": "Quantum Comm. (T3 - 矽晶系)", "recipe": { "processor": 3, "beam": 1, "fuel": 1 } },
+    "upload": { "tier": 3, "base_price": 8000, "label": "Mind Upload Chip (T3 - 矽晶系)", "recipe": { "scanner": 3, "beam": 1, "fuel": 1 } },
+
+    "elevator": { "tier": 3, "base_price": 8000, "label": "Elevator Cable (T3 - 鐵系)", "recipe": { "chassis": 3, "wafer": 1, "fuel": 1 } },
+    "terraform": { "tier": 3, "base_price": 8000, "label": "Terraformer (T3 - 鐵系)", "recipe": { "drone": 3, "wafer": 1, "fuel": 1 } },
+
+    "warp_core": { "tier": 3, "base_price": 8000, "label": "Warp Core (T3 - 能源系)", "recipe": { "reactor": 3, "wafer": 1, "beam": 1 } },
+    "star_conv": { "tier": 3, "base_price": 8000, "label": "Star Converter (T3 - 能源系)", "recipe": { "laser": 3, "wafer": 1, "beam": 1 } }
+  },
+  "events": [
+    {
+      "id": "EVT_01", "phase_req": "All",
+      "title": "小行星帶礦脈發現", "description": "探測器在近地軌道發現富含金屬的小行星。",
+      "effect_text": "鐵原料 (Iron) 供應過剩，系統收購價暴跌 50%。採集器本回合產出 +1。",
+      "type": "PRICE_MOD", "target": "iron", "price_mult": 0.5, "special_effect": "MINER_BOOST_1"
+    },
+    {
+      "id": "EVT_02", "phase_req": "Late",
+      "title": "恆星核心衰變 [防禦檢定]", "description": "恆星能量輸出下降，如果不重啟核心，所有設施將停擺。",
+      "effect_text": "強制徵收：每位玩家必須上繳 1 個 T3 曲速引擎 (Warp Core)。",
+      "type": "DEFENSE_CHECK", "req_item": "warp_core", "req_qty": 1, "penalty": "SHUTDOWN_FACILITIES"
+    },
+    {
+      "id": "EVT_03", "phase_req": "Late",
+      "title": "天網 AI 覺醒 [防禦檢定]", "description": "失控的人工智慧試圖癱瘓銀行系統。",
+      "effect_text": "強制徵收：每位玩家必須上繳 1 個 T3 意識上傳晶片 (Mind Upload)。未持有且無防災系統者，現金歸零或扣除 50%。",
+      "type": "DEFENSE_CHECK", "req_item": "upload", "req_qty": 1, "penalty": "HALVE_CASH"
+    },
+    {
+      "id": "EVT_04", "phase_req": "Early",
+      "title": "星際網路鋪設工程", "description": "聯盟宣布升級全宇宙的通訊網路，急需基礎導體。",
+      "effect_text": "系統無限量高價收購 T1 標準晶圓 (Wafer)。收購價為市價的 300%。",
+      "type": "GOV_BUY", "target": "wafer", "price_mult": 3.0, "limit": 999
+    },
+    {
+      "id": "EVT_05", "phase_req": "Mid",
+      "title": "基礎建設崩塌", "description": "舊時代的橋樑與建築開始結構性損壞，鋼材需求告急。",
+      "effect_text": "T1 工業鋼樑 (Beam) 成為剛需。若土地 > 初始值，每回合須額外支付 7 個鋼樑，否則拆除建築。",
+      "type": "SPECIAL", "logic_key": "LAND_TAX_BEAM", "req_item": "beam", "req_qty": 7
+    },
+    {
+      "id": "EVT_06", "phase_req": "Mid",
+      "title": "量子計算競賽", "description": "各大企業競相開發次世代電腦，處理器供不應求。",
+      "effect_text": "T2 運算處理器 (Processor) 價格上限解鎖，且系統保底收購價 300%。",
+      "type": "GOV_BUY", "target": "processor", "price_mult": 3.0, "uncapped": true
+    },
+    {
+      "id": "EVT_07", "phase_req": "Mid",
+      "title": "核融合洩漏恐慌", "description": "某地的能源工廠發生外洩，導致燃料棒被嚴格管控。",
+      "effect_text": "禁止交易 T2 微型核反應堆 (Reactor)。",
+      "type": "TRADE_BAN", "target": "reactor"
+    },
+    {
+      "id": "EVT_08", "phase_req": "All",
+      "title": "鑽石礦脈大爆發", "description": "地質學家在深層地底發現了超高純度鑽石層。",
+      "effect_text": "本回合擁有「鑽石場 (Diamond Mine)」的玩家，挖礦收益翻倍。",
+      "type": "SPECIAL", "logic_key": "DIAMOND_BOOST"
+    },
+    {
+      "id": "EVT_09", "phase_req": "All",
+      "title": "反壟斷法案", "description": "政府決心打擊寡頭壟斷。",
+      "effect_text": "資產稅：現金持有量最高的 3 名玩家，必須繳納 30% 現金，平分給其他玩家。",
+      "type": "SPECIAL", "logic_key": "ROBIN_HOOD_TAX"
+    },
+    {
+      "id": "EVT_10", "phase_req": "Mid",
+      "title": "新型引擎標準", "description": "聯邦通過了新的航太引擎安全法規。",
+      "effect_text": "T2 離子推進器 (Thruster) 需求大增。持有鐵系工廠玩家，每賣出一個獲得額外 $2000 補助。",
+      "type": "SUBSIDY", "target": "thruster", "bonus_cash": 2000
+    },
+    {
+      "id": "EVT_11", "phase_req": "Mid",
+      "title": "技術開源運動", "description": "駭客公佈了所有高階工廠的藍圖。",
+      "effect_text": "升級 T2 與 T3 工廠時，所需的「現金 (Cash)」費用全免（仍需材料）。",
+      "type": "FREE_UPGRADE"
+    },
+    {
+      "id": "EVT_12", "phase_req": "Late",
+      "title": "虛空蟲族入侵 [防禦檢定]", "description": "外星蟲族正在啃食太空站的外殼！",
+      "effect_text": "強制徵收：每位玩家必須上繳 1 個 T3 行星改造機 (Terraformer) 作為機甲。未持有且無防災系統者，隨機摧毀一座工廠。",
+      "type": "DEFENSE_CHECK", "req_item": "terraform", "req_qty": 1, "penalty": "DESTROY_FACTORY"
+    }
+  ],
+  "gov_acquisitions": [
+    {
+      "id": "E-01", "phase_req": "Early", "title": "邊境哨站擴建", "targets": ["beam", "wafer"], "limit_type": "UNLIMITED", "limit": 0
+    },
+    {
+      "id": "E-02", "phase_req": "Early", "title": "星際通訊網鋪設", "targets": ["wafer", "fuel"], "limit_type": "GLOBAL", "limit": 8
+    },
+    {
+      "id": "E-03", "phase_req": "Early", "title": "能源儲備法令", "targets": ["fuel", "beam"], "limit_type": "PLAYER", "limit": 2
+    },
+    {
+      "id": "M-01", "phase_req": "Mid", "title": "第一次艦隊重組", "targets": ["thruster", "shield"], "limit_type": "UNLIMITED", "limit": 0
+    },
+    {
+      "id": "M-02", "phase_req": "Mid", "title": "殖民地文化復興", "targets": ["projector", "scanner"], "limit_type": "MIXED", "limits": {"projector": 999, "scanner": 5}
+    },
+    {
+      "id": "M-03", "phase_req": "Mid", "title": "深空採礦潮", "targets": ["drone", "thruster"], "limit_type": "PLAYER", "limit": 3
+    },
+    {
+      "id": "M-04", "phase_req": "Mid", "title": "邊境動盪", "targets": ["shield", "laser"], "limit_type": "GLOBAL", "limit": 12
+    },
+    {
+      "id": "L-01", "phase_req": "Late", "title": "方舟計畫", "targets": ["warp_core", "star_conv", "thruster", "shield"], "limit_type": "MIXED", "limits": {"warp_core": 2, "star_conv": 2, "thruster": 999, "shield": 999}
+    },
+    {
+      "id": "L-02", "phase_req": "Late", "title": "天網防禦系統", "targets": ["quantum", "elevator", "projector"], "limit_type": "MIXED", "limits": {"quantum": 3, "elevator": 3, "projector": 5}
+    },
+    {
+      "id": "L-03", "phase_req": "Late", "title": "第二家園計畫", "targets": ["terraform", "thruster", "shield"], "limit_type": "MIXED", "limits": {"terraform": 1, "thruster": 999, "shield": 999}
+    },
+    {
+      "id": "L-04", "phase_req": "Late", "title": "意識永生法案", "targets": ["upload", "projector"], "limit_type": "MIXED", "limits": {"upload": 3, "projector": 999}
+    },
+    {
+      "id": "L-05", "phase_req": "Late", "title": "全面戰爭總動員", 
+      "targets": ["quantum", "upload", "elevator", "terraform", "warp_core", "star_conv", "processor", "projector", "scanner", "thruster", "drone", "chassis", "reactor", "laser", "shield"], 
+      "limit_type": "MIXED", 
+      "limits": {"quantum": 1, "upload": 1, "elevator": 1, "terraform": 1, "warp_core": 1, "star_conv": 1, "processor": 999, "projector": 999, "scanner": 999, "thruster": 999, "drone": 999, "chassis": 999, "reactor": 999, "laser": 999, "shield": 999}
+    }
+  ]
+}

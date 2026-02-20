@@ -73,16 +73,47 @@
                     <button class="btn btn-red" style="flex: 1;" onclick="sellToBank()">出售</button>
                 </div>
             </div>
+            
             <div class="card">
-                <h4 style="margin-top: 0;">2. 建設新設施 (Construction)</h4>
+                <h4 style="margin-top: 0;">2. 建設一般設施 (Normal Build)</h4>
                 <button class="btn btn-green" onclick="buildMiner()">建造 T0 採集器 ($500)</button>
                 <button class="btn btn-green" style="margin-top:10px; background:#218838;" onclick="buildFactory()">
                     建造 T1 加工廠 <br> 
                     <span style="font-size:0.8em; opacity: 0.9;">(免費! 需消耗 材料A & B 各3個 T0原料)</span>
                 </button>
             </div>
+
+            <div class="card" style="border: 1px solid #9b59b6;">
+                <h4 style="margin-top: 0; color: #9b59b6;">🌟 3. 建造特殊建築 (Special Build)</h4>
+                <div style="font-size: 0.85em; color: #aaa; margin-bottom: 12px; line-height: 1.5; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px;">
+                    請先在最上方「選擇付款材料」決定你要消耗的物品，再點擊下方按鈕。<br>
+                    <strong>【矽晶系】</strong>T2:處理器,投影儀,掃描儀 | T3:量子通訊,意識上傳<br>
+                    <strong>【鐵系】</strong>T2:推進器,採礦機,底盤 | T3:太空電梯,行星改造<br>
+                    <strong>【能源系】</strong>T2:反應堆,雷射,護盾 | T3:曲速引擎,恆星轉換
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <button class="btn" style="background: #27ae60; margin:0;" onclick="buildSpecial('land')">
+                        擴充土地 (+1)<br><small style="opacity:0.85">3種不同 T3 * 1</small>
+                    </button>
+                    <button class="btn" style="background: #2980b9; margin:0;" onclick="buildSpecial('diamond')">
+                        💎 鑽石場<br><small style="opacity:0.85">矽晶T2*4 + 鐵T2*4</small>
+                    </button>
+                    <button class="btn" style="background: #8e44ad; margin:0;" onclick="buildSpecial('prophet')">
+                        👁️ 預言家<br><small style="opacity:0.85">矽晶T3*3</small>
+                    </button>
+                    <button class="btn" style="background: #d35400; margin:0;" onclick="buildSpecial('defense')">
+                        🛡️ 防災中心<br><small style="opacity:0.85">鐵T3*1 + 能源T3*2</small>
+                    </button>
+                    <button class="btn" style="background: #f1c40f; color: #000; margin:0;" onclick="buildSpecial('omni')">
+                        ⚙️ 萬能工廠<br><small style="opacity:0.85">能源T3*3</small>
+                    </button>
+                    <button class="btn" style="background: #c0392b; margin:0;" onclick="buildSpecial('accelerator')">
+                        ⚡ 加速器<br><small style="opacity:0.85">鐵T3*2 + 能源T3*1</small>
+                    </button>
+                </div>
+            </div>
             <div class="card">
-                <h4 style="margin-top: 0;">3. 我的設施 (Facilities)</h4>
+                <h4 style="margin-top: 0;">4. 我的設施 (Facilities)</h4>
                 <div id="factory-list"></div>
             </div>
         </div>
@@ -116,6 +147,20 @@
             </div>
             
             <button class="btn" style="background: #9b59b6; margin-top: 15px;" onclick="submitOrder()">提交訂單</button>
+        </div>
+    </div>
+
+    <div id="game-over-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; color: white; text-align: center;">
+        <div style="background: #222; padding: 40px; border-radius: 15px; border: 2px solid #ff9800; max-width: 500px; width: 90%; box-shadow: 0 0 20px #ff9800;">
+            <h1 style="color: #ff9800; font-size: 2.5em; margin-bottom: 10px;">🏆 遊戲結束 🏆</h1>
+            <h2 id="my-final-rank" style="font-size: 2em; margin-bottom: 5px;">計算中...</h2>
+            <div id="my-final-assets" style="color: #aaa; margin-bottom: 20px;"></div>
+            
+            <hr style="border-color: #444; margin: 20px 0;">
+            
+            <h3 style="color: #fff; margin-bottom: 15px;">📜 全服排行榜</h3>
+            <div id="global-ranking-list" style="text-align: left; background: #111; padding: 15px; border-radius: 8px; max-height: 200px; overflow-y: auto;">
+                </div>
         </div>
     </div>
 

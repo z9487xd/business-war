@@ -6,11 +6,16 @@ async function updateStatus() {
         const data = await res.json();
         
         // 1. 顯示階段與回合 (中文化)
-        // 後端傳來的 phase 是數字 1, 2, 3, 4
-        const phaseNames = {1: "新聞階段", 2: "行動階段", 3: "交易階段", 4: "結算階段"};
+        // 後端傳來的 phase 是數字 1, 2, 3, 4, 5
+        const phaseNames = {1: "新聞階段", 2: "行動階段", 3: "交易階段", 4: "結算階段", 5:"遊戲結束"};
         const phaseName = phaseNames[data.phase] || "未知";
         
-        document.getElementById("current-phase").innerText = `階段 ${data.phase}: ${phaseName}`;
+        if(data.phase != 5){
+            document.getElementById("current-phase").innerText = `階段 ${data.phase}: ${phaseName}`;
+        }
+        else{
+            document.getElementById("current-phase").innerText = `${phaseName}`;        
+        }
         document.getElementById("current-turn").innerText = `第 ${data.turn} 回合`;
 
         // 2. 更新市場價格表
@@ -83,16 +88,44 @@ function updateMarketTable(prices, meta) {
     }
 }
 
+// 移除切換階段的警告視窗，點擊後直接執行
 async function nextPhase() { 
-    if(!confirm("確定要進入「下一階段」嗎？\n這將推進遊戲進度。")) return;
     await fetch("/admin/next_phase", {method: "POST"}); 
     updateStatus(); 
 }
 
+// 重置遊戲保留警告，避免誤觸
 async function resetGame() { 
-    if(!confirm("⚠️ 警告：確定要「重置遊戲」嗎？\n所有玩家數據將被清空，無法復原！")) return;
+    if(!confirm("警告：確定要「重置遊戲」嗎？\n所有玩家數據將被清空，無法復原！")) return;
     await fetch("/admin/reset", {method: "POST"}); 
     updateStatus(); 
+}
+
+async function endGame() {
+    if (!confirm("確定要現在結束遊戲並結算分數嗎？\n這將進入結算階段，停止所有玩家的動作並計算最終總資產。")) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('/admin/end_game', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        const result = await response.json();
+        
+        if (result.status === "success") {
+            alert("遊戲已結算！\n請查看下方的「系統日誌」了解最終排名。");
+            // 選擇性：重新載入畫面或立刻呼叫一次更新狀態的函式
+            // location.reload(); 
+        } else {
+            alert("結算失敗: " + result.message);
+        }
+    } catch (error) {
+        console.error("結算時發生錯誤:", error);
+        alert("伺服器連線錯誤，請檢查系統 Console。");
+    }
 }
 
 setInterval(updateStatus, 1000);
