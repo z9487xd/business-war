@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>工業大亨 (Industrial Oligarchs)</title>
-    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="/static/css/game.css">
 </head>
 <body>
 
@@ -20,7 +20,7 @@
             <hr>
             <p id="modal-desc">新聞內容...</p>
             <div class="news-effect-box">
-                <strong style="color: #f1c40f;">⚡ 當前影響：</strong><br>
+                <strong style="color: #f1c40f;">當前影響：</strong><br>
                 <span id="modal-effect" style="font-size: 1.1em;">影響說明</span>
             </div>
             <div class="news-phase-indicator">(您可以關閉此視窗查看庫存)</div>
@@ -50,22 +50,13 @@
         </div>
 
         <div class="card">
-            <h4 style="margin-top: 0; color: #e67e22; border-bottom: 1px solid #444; padding-bottom: 5px;">📦 倉庫庫存 (Inventory)</h4>
+            <h4 style="margin-top: 0; color: #e67e22; border-bottom: 1px solid #444; padding-bottom: 5px;">倉庫庫存 (Inventory)</h4>
             <div id="inventory-list" style="min-height: 20px; color: #777; font-style: italic;">(倉庫是空的)</div>
         </div>
 
         <div id="action-panel" class="hidden">
-            <div class="card" style="border: 1px solid #f39c12;">
-                <h4 style="margin-top: 0; color: #f39c12;">1. 選擇付款材料 (Payment)</h4>
-                <div style="font-size: 0.8em; color: #aaa; margin-bottom: 10px;">升級或建造工廠時，需在此選擇消耗的原料。</div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px;">
-                    <div><label>材料 A</label><select id="pay-mat-1"><option value="">無</option></select></div>
-                    <div><label>材料 B</label><select id="pay-mat-2"><option value="">無</option></select></div>
-                    <div><label>材料 C</label><select id="pay-mat-3"><option value="">無</option></select></div>
-                </div>
-            </div>
             <div class="card" style="border: 1px solid #7f8c8d;">
-                <h4 style="margin-top: 0; color: #bdc3c7;">🏦 銀行回收 (Bank Liquidation)</h4>
+                <h4 style="margin-top: 0; color: #bdc3c7;">銀行回收 (Bank Liquidation)</h4>
                 <div style="font-size: 0.8em; color: #aaa; margin-bottom: 5px;">急需現金？以市價 85% 快速變現。</div>
                 <div class="row" style="gap: 5px;">
                     <select id="bank-item" style="flex: 2;"></select>
@@ -75,92 +66,138 @@
             </div>
             
             <div class="card">
-                <h4 style="margin-top: 0;">2. 建設一般設施 (Normal Build)</h4>
-                <button class="btn btn-green" onclick="buildMiner()">建造 T0 採集器 ($500)</button>
-                <button class="btn btn-green" style="margin-top:10px; background:#218838;" onclick="buildFactory()">
+                <h4 style="margin-top: 0;">1. 建設一般設施 (Normal Build)</h4>
+                <button class="btn btn-green" onclick="openWarehouseModal('buildMiner')">建造 T0 採集器 ($500)</button>
+                <button class="btn btn-green" style="margin-top:10px; background:#218838;" onclick="openWarehouseModal('buildFactory')">
                     建造 T1 加工廠 <br> 
                     <span style="font-size:0.8em; opacity: 0.9;">(免費! 需消耗 材料A & B 各3個 T0原料)</span>
                 </button>
             </div>
 
             <div class="card" style="border: 1px solid #9b59b6;">
-                <h4 style="margin-top: 0; color: #9b59b6;">🌟 3. 建造特殊建築 (Special Build)</h4>
-                <div style="font-size: 0.85em; color: #aaa; margin-bottom: 12px; line-height: 1.5; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px;">
-                    請先在最上方「選擇付款材料」決定你要消耗的物品，再點擊下方按鈕。<br>
+                <h4 style="margin-top: 0; color: #9b59b6;">2. 建造特殊建築 (Special Build)</h4>
+                <div class="instruction-box">
+                    點擊按鈕後，請從彈出的倉庫中選擇支付材料。<br>
                     <strong>【矽晶系】</strong>T2:處理器,投影儀,掃描儀 | T3:量子通訊,意識上傳<br>
                     <strong>【鐵系】</strong>T2:推進器,採礦機,底盤 | T3:太空電梯,行星改造<br>
                     <strong>【能源系】</strong>T2:反應堆,雷射,護盾 | T3:曲速引擎,恆星轉換
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                    <button class="btn" style="background: #27ae60; margin:0;" onclick="buildSpecial('land')">
+                    <button class="btn" style="background: #27ae60; margin:0;" onclick="openWarehouseModal('special_land')">
                         擴充土地 (+1)<br><small style="opacity:0.85">3種不同 T3 * 1</small>
                     </button>
-                    <button class="btn" style="background: #2980b9; margin:0;" onclick="buildSpecial('diamond')">
-                        💎 鑽石場<br><small style="opacity:0.85">矽晶T2*4 + 鐵T2*4</small>
+                    <button class="btn" style="background: #2980b9; margin:0;" onclick="openWarehouseModal('special_diamond')">
+                        鑽石場<br><small style="opacity:0.85">矽晶T2*4 + 鐵T2*4</small>
                     </button>
-                    <button class="btn" style="background: #8e44ad; margin:0;" onclick="buildSpecial('prophet')">
-                        👁️ 預言家<br><small style="opacity:0.85">矽晶T3*3</small>
+                    <button class="btn" style="background: #8e44ad; margin:0;" onclick="openWarehouseModal('special_prophet')">
+                        預言家<br><small style="opacity:0.85">矽晶T3*3</small>
                     </button>
-                    <button class="btn" style="background: #d35400; margin:0;" onclick="buildSpecial('defense')">
-                        🛡️ 防災中心<br><small style="opacity:0.85">鐵T3*1 + 能源T3*2</small>
+                    <button class="btn" style="background: #d35400; margin:0;" onclick="openWarehouseModal('special_defense')">
+                        防災中心<br><small style="opacity:0.85">鐵T3*1 + 能源T3*2</small>
                     </button>
-                    <button class="btn" style="background: #f1c40f; color: #000; margin:0;" onclick="buildSpecial('omni')">
-                        ⚙️ 萬能工廠<br><small style="opacity:0.85">能源T3*3</small>
+                    <button class="btn" style="background: #f1c40f; color: #000; margin:0;" onclick="openWarehouseModal('special_omni')">
+                        萬能工廠<br><small style="opacity:0.85">能源T3*3</small>
                     </button>
-                    <button class="btn" style="background: #c0392b; margin:0;" onclick="buildSpecial('accelerator')">
-                        ⚡ 加速器<br><small style="opacity:0.85">鐵T3*2 + 能源T3*1</small>
+                    <button class="btn" style="background: #c0392b; margin:0;" onclick="openWarehouseModal('special_accelerator')">
+                        加速器<br><small style="opacity:0.85">鐵T3*2 + 能源T3*1</small>
                     </button>
                 </div>
             </div>
             <div class="card">
-                <h4 style="margin-top: 0;">4. 我的設施 (Facilities)</h4>
+                <h4 style="margin-top: 0;">3. 我的設施 (Facilities)</h4>
                 <div id="factory-list"></div>
             </div>
         </div>
 
         <div id="trading-panel" class="card hidden">
-            <h4 style="margin-top: 0; color: #9b59b6;">⚖️ 市場交易所 (Market Exchange)</h4>
+            <h4 style="margin-top: 0; color: #9b59b6;">市場交易所 (Market Exchange)</h4>
             
             <div style="display: flex; gap: 5px; margin-bottom: 10px;">
                 <button id="mode-market" class="btn" style="background: #9b59b6; flex: 1;" onclick="setTradeMode('MARKET')">一般市場</button>
-                <button id="mode-gov" class="btn" style="background: #34495e; opacity: 0.5; flex: 1;" onclick="setTradeMode('GOV')">政府合約</button>
+                <button id="mode-gov" class="btn" style="background: #34495e; opacity: 0.5; flex: 1;" onclick="setTradeMode('GOV')">政府收購</button>
             </div>
 
-            <label>交易類型</label>
-            <select id="trade-type">
-                <option value="BID">買入 (BID) - 花錢買貨</option>
-                <option value="ASK">賣出 (ASK) - 賣貨換錢</option>
-            </select>
-            
-            <label>選擇物品</label>
-            <select id="trade-item"></select>
-            
-            <div style="display: flex; gap: 10px;">
-                <div style="flex: 1;">
-                    <label>單價 ($)</label>
-                    <input type="number" id="trade-price" placeholder="出價" min="1">
-                </div>
-                <div style="flex: 1;">
-                    <label>數量</label>
-                    <input type="number" id="trade-qty" placeholder="數量" min="1">
+            <div id="ui-market">
+                <label>交易類型</label>
+                <select id="trade-type">
+                    <option value="BID">買入 (BID) - 花錢買貨</option>
+                    <option value="ASK">賣出 (ASK) - 賣貨換錢</option>
+                </select>
+                
+                <label>選擇物品</label>
+                <select id="trade-item"></select>
+                
+                <div style="display: flex; gap: 10px;">
+                    <div style="flex: 1;">
+                        <label>單價 ($)</label>
+                        <input type="number" id="trade-price" placeholder="出價" min="1">
+                    </div>
+                    <div style="flex: 1;">
+                        <label>數量</label>
+                        <input type="number" id="trade-qty" placeholder="數量" min="1">
+                    </div>
                 </div>
             </div>
+
+            <div id="ui-gov" class="hidden">
+                <div style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 4px; margin-bottom: 10px;">
+                    <strong style="color: #f1c40f;">當前政府收購清單 (固定溢價 50%)</strong>
+                    <div id="gov-target-list" style="margin-top: 5px; color: #bdc3c7; font-size: 0.9em; line-height: 1.5;">
+                        (目前無收購案)
+                    </div>
+                </div>
+                
+                <label>選擇要出售的物品</label>
+                <select id="gov-trade-item"></select>
+                
+                <label>出售數量</label>
+                <input type="number" id="gov-trade-qty" placeholder="數量" min="1">
+            </div>
             
-            <button class="btn" style="background: #9b59b6; margin-top: 15px;" onclick="submitOrder()">提交訂單</button>
+            <button class="btn" style="background: #9b59b6; margin-top: 15px; width: 100%;" onclick="submitOrder()">提交訂單</button>
+        </div>
+
+    <div id="game-over-modal" class="custom-modal-overlay hidden" style="z-index: 9999;">
+        <div style="background: #222; padding: 40px; border-radius: 15px; border: 2px solid #ff9800; max-width: 500px; width: 90%; box-shadow: 0 0 20px #ff9800; text-align: center;">
+            <h1 style="color: #ff9800; font-size: 2.5em; margin-bottom: 10px;">遊戲結束</h1>
+            <h2 id="my-final-rank" style="font-size: 2em; margin-bottom: 5px;">計算中...</h2>
+            <div id="my-final-assets" style="color: #aaa; margin-bottom: 20px;"></div>
+            <hr style="border-color: #444; margin: 20px 0;">
+            <h3 style="color: #fff; margin-bottom: 15px;">全服排行榜</h3>
+            <div id="global-ranking-list" style="text-align: left; background: #111; padding: 15px; border-radius: 8px; max-height: 200px; overflow-y: auto;"></div>
         </div>
     </div>
 
-    <div id="game-over-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; color: white; text-align: center;">
-        <div style="background: #222; padding: 40px; border-radius: 15px; border: 2px solid #ff9800; max-width: 500px; width: 90%; box-shadow: 0 0 20px #ff9800;">
-            <h1 style="color: #ff9800; font-size: 2.5em; margin-bottom: 10px;">🏆 遊戲結束 🏆</h1>
-            <h2 id="my-final-rank" style="font-size: 2em; margin-bottom: 5px;">計算中...</h2>
-            <div id="my-final-assets" style="color: #aaa; margin-bottom: 20px;"></div>
+    <div id="sys-alert-modal" class="custom-modal-overlay hidden">
+        <div class="custom-modal-box">
+            <h3 class="custom-modal-header" id="sys-alert-title">系統宣告</h3>
+            <p id="sys-alert-msg" style="margin: 20px 0; line-height: 1.6;"></p>
+            <button onclick="document.getElementById('sys-alert-modal').classList.add('hidden')" class="btn" style="background: #0056b3; width: 100%;">確認 (Confirm)</button>
+        </div>
+    </div>
+
+    <div id="sys-confirm-modal" class="custom-modal-overlay hidden" style="z-index: 2001;">
+        <div class="custom-modal-box">
+            <h3 class="custom-modal-header" id="sys-confirm-title">確認操作</h3>
+            <p id="sys-confirm-msg" style="margin: 20px 0; line-height: 1.6;"></p>
+            <div style="display: flex; gap: 10px;">
+                <button id="sys-confirm-no" class="btn" style="background: #444; flex: 1;">取消</button>
+                <button id="sys-confirm-yes" class="btn" style="background: #c0392b; flex: 1;">確認執行</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="warehouse-modal" class="custom-modal-overlay hidden">
+        <div class="custom-modal-box" style="max-width: 500px;">
+            <h3 class="custom-modal-header">選擇消耗物資</h3>
+            <p style="font-size: 0.9em; color: #aaa;">請從下方點選您要投入的物資：</p>
             
-            <hr style="border-color: #444; margin: 20px 0;">
+            <div id="warehouse-selection-grid" class="warehouse-grid"></div>
             
-            <h3 style="color: #fff; margin-bottom: 15px;">📜 全服排行榜</h3>
-            <div id="global-ranking-list" style="text-align: left; background: #111; padding: 15px; border-radius: 8px; max-height: 200px; overflow-y: auto;">
-                </div>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button onclick="closeWarehouseModal()" class="btn" style="background: #444; flex: 1;">取消</button>
+                <button id="confirm-warehouse-btn" onclick="submitWarehouseSelection()" class="btn" style="background: #27ae60; flex: 1;" disabled>確認提交</button>
+            </div>
         </div>
     </div>
 

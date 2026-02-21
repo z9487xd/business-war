@@ -121,3 +121,92 @@ label { font-size: 0.9em; color: #bbb; display: block; margin-bottom: 2px; }
 }
 .recipe-ok { color: #2ecc71; } /* 綠色：足夠 */
 .recipe-fail { color: #e74c3c; font-weight: bold; } /* 紅色：不足 */
+
+.custom-modal-overlay {
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%;
+    background: rgba(0, 0, 0, 0.75);
+    display: flex; 
+    justify-content: center; 
+    align-items: center;
+    z-index: 2000;
+}
+
+.custom-modal-box {
+    background: #1e1e24; 
+    color: #f8f9fa;
+    border: 1px solid #444; 
+    border-radius: 4px;
+    padding: 20px; 
+    width: 90%; 
+    max-width: 400px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.6); 
+    text-align: center;
+}
+
+.custom-modal-header {
+    margin-top: 0; 
+    border-bottom: 1px solid #444;
+    padding-bottom: 10px; 
+    color: #d4af37; 
+    font-size: 1.2em;
+}
+
+.warehouse-grid {
+    display: grid; 
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 10px; 
+    margin: 15px 0; 
+    max-height: 250px; 
+    overflow-y: auto;
+}
+
+.warehouse-item-btn {
+    background: #2b2b36; 
+    border: 1px solid #555; 
+    color: #ddd;
+    padding: 10px 5px; 
+    cursor: pointer; 
+    border-radius: 4px; 
+    transition: 0.2s;
+}
+
+.warehouse-item-btn:hover { 
+    background: #3b3b4a; 
+}
+
+.warehouse-item-btn.selected {
+    background: #352c15; 
+    border-color: #d4af37; 
+    color: #fff; 
+    font-weight: bold;
+}
+
+.instruction-box {
+    font-size: 0.85em; 
+    color: #aaa; 
+    margin-bottom: 12px; 
+    line-height: 1.5; 
+    background: rgba(0,0,0,0.2); 
+    padding: 8px; 
+    border-radius: 4px;
+}
+
+.hidden { 
+    display: none !important; 
+}
+
+.warehouse-item-btn.selected.valid-selection {
+    border-color: #2ecc71 !important;
+    background: rgba(46, 204, 113, 0.15) !important;
+    color: #2ecc71 !important;
+}
+
+.warehouse-item-btn.selected.invalid-selection {
+    border-color: #e74c3c !important;
+    background: rgba(231, 76, 60, 0.15) !important;
+    color: #e74c3c !important;
+}

@@ -68,40 +68,36 @@ class GameEngine:
 
         return self.current_event
     
-    # --- Phase 2: Production ---
+# --- Phase 2: Production ---
     def process_production(self, player: PlayerState, factory_id: str, target_item: str, quantity: int) -> Tuple[bool, str]:
         # 1. 尋找對應的設施
         factory = next((f for f in player.factories if f.id == factory_id), None)
         if not factory: 
             return False, "找不到該設施"
             
-        # 2. 檢查冷卻與停擺狀態
-        if getattr(factory, "has_produced", False): 
-            return False, "該設施本回合已運作過！"
+        # 2. 檢查停擺狀態 
         if getattr(factory, "is_shutdown", False):
             return False, "該設施因天災停擺中，本回合無法運作！"
             
-        # 安全取得目前的事件 (如果沒有事件則給空字典)
         event = getattr(self, "current_event", {}) or {}
 
-        # 3. 採集器 (Miner) 邏輯
         if "Miner" in factory.name:
+            if getattr(factory, "has_produced", False):
+                return False, "該採集器本回合已經開採過了！"
+
             if target_item not in config.ITEMS or config.ITEMS[target_item].get("tier") != 0:
                 return False, "採集器只能開採 T0 原料"
             
-            # 從設定檔取得基礎產量
             base_output = config.MINER_OUTPUTS.get(factory.tier, 3)
             qty_produced = base_output * quantity
-            
-            # 🌟 特殊事件加成：小行星帶礦脈
+        
             if event.get("special_effect") == "MINER_BOOST_1":
                 qty_produced += (1 * quantity)
                 
             player.inventory[target_item] += qty_produced
-            factory.has_produced = True  # 標記為已生產
+            factory.has_produced = True 
             return True, f"開採了 {qty_produced} 個 {config.ITEMS[target_item]['label']}"
             
-        # 4. 一般加工廠 (Factory) 邏輯
         else:
             item_data = config.ITEMS.get(target_item)
             if not item_data or "recipe" not in item_data:
@@ -110,23 +106,20 @@ class GameEngine:
             if factory.tier < item_data["tier"]:
                 return False, f"工廠等級不足 (需要 T{item_data['tier']})"
             
-            # 檢查庫存是否足夠
+      
             for ing_id, req_qty in item_data["recipe"].items():
                 if player.inventory.get(ing_id, 0) < req_qty * quantity:
-                    return False, f"原料不足: 缺少 {config.ITEMS[ing_id]['label']}"
-            
-            # 扣除原料
+                    return False, f"原料不足: 缺少 {config.ITEMS[ing_id]['label']} (需要 {req_qty * quantity} 個)"
+        
             for ing_id, req_qty in item_data["recipe"].items():
                 player.inventory[ing_id] -= req_qty * quantity
             
             qty_produced = quantity
-            
-            # 🌟 特殊建築加成：鑽石場遇到大爆發
+     
             if factory.name == "Diamond Mine" and event.get("logic_key") == "DIAMOND_BOOST":
                 qty_produced *= 2
                 
-            player.inventory[target_item] += qty_produced
-            factory.has_produced = True  # 標記為已生產
+            player.inventory[target_item] += qty_produced            
             return True, f"生產了 {qty_produced} 個 {item_data['label']}"
     
     def process_build_new(self, player: PlayerState, target_tier: int, materials: List[str]) -> Tuple[bool, str]:

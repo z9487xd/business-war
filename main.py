@@ -69,9 +69,6 @@ async def get_admin_data():
         "turn": current_turn,
         "players": player_list,
         "logs": game_logs,
-        # ==========================================
-        # 這裡修復了 Admin 端看不到市價的問題！
-        # ==========================================
         "items_meta": config.ITEMS,
         "market_prices": engine.market_prices
     }
@@ -201,7 +198,7 @@ async def place_order(data: TradeModel):
 
     if engine.current_event and engine.current_event.get("type") == "TRADE_BAN":
         if data.item_id == engine.current_event["target"]:
-            raise HTTPException(400, f"⚠️ 核災恐慌：本回合禁止交易 {config.ITEMS[data.item_id]['label']}！")
+            raise HTTPException(400, f" 核災恐慌：本回合禁止交易 {config.ITEMS[data.item_id]['label']}！")
     
     p = players[data.player_id]
     order_type = data.type
