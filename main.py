@@ -239,9 +239,12 @@ async def next_phase():
     log_event(f"--- 管理員切換階段: 從 {current_phase} 結束 ---")
 
     if current_phase == 3:
-        engine.execute_call_auction(players)
+        match_logs = engine.execute_call_auction(players)
         current_phase = 4
         log_event("市場撮合完成，進入結算階段")
+        
+        for log in match_logs:
+            log_event(log)
         
         # 🌟 新增：呼叫我們剛剛寫的結算機制 (扣稅、事件懲罰)
         end_turn_logs = engine.process_end_of_turn(players)

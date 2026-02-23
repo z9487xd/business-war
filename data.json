@@ -47,35 +47,81 @@
       "3": 12
     }
   },
-"items": {
-    "silicon": { "tier": 0, "base_price": 500, "label": "Silicon (T0 原料)" },
-    "iron": { "tier": 0, "base_price": 500, "label": "Iron (T0 原料)" },
-    "energy": { "tier": 0, "base_price": 500, "label": "Energy Stone (T0 原料)" },
 
-    "wafer": { "tier": 1, "base_price": 1200, "label": "Standard Wafer (T1 - 矽晶系)", "recipe": { "silicon": 2 } },
-    "beam": { "tier": 1, "base_price": 1200, "label": "Industrial Beam (T1 - 鐵系)", "recipe": { "iron": 2 } },
-    "fuel": { "tier": 1, "base_price": 1200, "label": "Solid Fuel (T1 - 能源系)", "recipe": { "energy": 2 } },
+  "special_facilities": {
+    "special_land": {
+      "id": "special_land",
+      "label": "擴充土地",
+      "effect_desc": "增加一個土地",
+      "cost_desc": "三種 T3 各一",
+      "cost_rule": "UNIQUE_TIER",
+      "costs": { "tier": 3, "unique_qty": 3, "qty_per_item": 1 }
+    },
+    "special_diamond": {
+      "id": "special_diamond",
+      "label": "鑽石場",
+      "effect_desc": "每回合可生產鑽石",
+      "cost_desc": "矽晶T2*4 + 鐵T2*4",
+      "cost_rule": "SERIES_AND_TIER",
+      "costs": { "silicon_2": 4, "iron_2": 4 }
+    },
+    "special_defense": {
+      "id": "special_defense",
+      "label": "防災系統",
+      "effect_desc": "被動:觸發防禦檢定時可免除懲罰",
+      "cost_desc": "鐵T3*1 + 能源石T3*2",
+      "cost_rule": "SERIES_AND_TIER",
+      "costs": { "iron_3": 1, "energy_3": 2 }
+    },
+    "special_omni": {
+      "id": "special_omni",
+      "label": "萬能工廠",
+      "effect_desc": "生產產品可用其他系原料、物品代替(等級不變)",
+      "cost_desc": "能源石T3*3",
+      "cost_rule": "SERIES_AND_TIER",
+      "costs": { "energy_3": 3 }
+    },
+    "special_accelerator": {
+      "id": "special_accelerator",
+      "label": "加速器",
+      "effect_desc": "產量翻倍",
+      "cost_desc": "鐵T3*2 + 能源石T3*2",
+      "cost_rule": "SERIES_AND_TIER",
+      "costs": { "iron_3": 2, "energy_3": 2 }
+    }
+  },
 
-    "processor": { "tier": 2, "base_price": 3000, "label": "Processor (T2 - 矽晶系)", "recipe": { "wafer": 2, "energy": 1 } },
-    "projector": { "tier": 2, "base_price": 3000, "label": "Holo-Projector (T2 - 矽晶系)", "recipe": { "wafer": 1, "fuel": 1, "silicon": 1 } },
-    "scanner": { "tier": 2, "base_price": 3000, "label": "Bio-Scanner (T2 - 矽晶系)", "recipe": { "wafer": 1, "beam": 1, "iron": 1 } },
+  "items": {
+    "silicon": { "tier": 0, "series": "silicon", "base_price": 500, "label": "Silicon (T0 原料)" },
+    "iron": { "tier": 0, "series": "iron", "base_price": 500, "label": "Iron (T0 原料)" },
+    "energy": { "tier": 0, "series": "energy", "base_price": 500, "label": "Energy Stone (T0 原料)" },
 
-    "thruster": { "tier": 2, "base_price": 3000, "label": "Ion Thruster (T2 - 鐵系)", "recipe": { "beam": 1, "fuel": 1, "energy": 1 } },
-    "drone": { "tier": 2, "base_price": 3000, "label": "Mining Drone (T2 - 鐵系)", "recipe": { "beam": 1, "wafer": 1, "silicon": 1 } },
-    "chassis": { "tier": 2, "base_price": 3000, "label": "Heavy Chassis (T2 - 鐵系)", "recipe": { "beam": 2, "silicon": 1 } },
+    "wafer": { "tier": 1, "series": "silicon", "base_price": 1200, "label": "Standard Wafer (T1 - 矽晶系)", "recipe": { "silicon": 2 } },
+    "beam": { "tier": 1, "series": "iron", "base_price": 1200, "label": "Industrial Beam (T1 - 鐵系)", "recipe": { "iron": 2 } },
+    "fuel": { "tier": 1, "series": "energy", "base_price": 1200, "label": "Solid Fuel (T1 - 能源系)", "recipe": { "energy": 2 } },
 
-    "reactor": { "tier": 2, "base_price": 3000, "label": "Micro Reactor (T2 - 能源系)", "recipe": { "fuel": 2, "iron": 1 } },
-    "laser": { "tier": 2, "base_price": 3000, "label": "High-Energy Laser (T2 - 能源系)", "recipe": { "fuel": 1, "beam": 1, "iron": 1 } },
-    "shield": { "tier": 2, "base_price": 3000, "label": "Magnetic Shield (T2 - 能源系)", "recipe": { "fuel": 1, "wafer": 1, "silicon": 1 } },
+    "processor": { "tier": 2, "series": "silicon", "base_price": 3000, "label": "Processor (T2 - 矽晶系)", "recipe": { "wafer": 2, "energy": 1 } },
+    "projector": { "tier": 2, "series": "silicon", "base_price": 3000, "label": "Holo-Projector (T2 - 矽晶系)", "recipe": { "wafer": 1, "fuel": 1, "silicon": 1 } },
+    "scanner": { "tier": 2, "series": "silicon", "base_price": 3000, "label": "Bio-Scanner (T2 - 矽晶系)", "recipe": { "wafer": 1, "beam": 1, "iron": 1 } },
 
-    "quantum": { "tier": 3, "base_price": 8000, "label": "Quantum Comm. (T3 - 矽晶系)", "recipe": { "processor": 3, "beam": 1, "fuel": 1 } },
-    "upload": { "tier": 3, "base_price": 8000, "label": "Mind Upload Chip (T3 - 矽晶系)", "recipe": { "scanner": 3, "beam": 1, "fuel": 1 } },
+    "thruster": { "tier": 2, "series": "iron", "base_price": 3000, "label": "Ion Thruster (T2 - 鐵系)", "recipe": { "beam": 1, "fuel": 1, "energy": 1 } },
+    "drone": { "tier": 2, "series": "iron", "base_price": 3000, "label": "Mining Drone (T2 - 鐵系)", "recipe": { "beam": 1, "wafer": 1, "silicon": 1 } },
+    "chassis": { "tier": 2, "series": "iron", "base_price": 3000, "label": "Heavy Chassis (T2 - 鐵系)", "recipe": { "beam": 2, "silicon": 1 } },
 
-    "elevator": { "tier": 3, "base_price": 8000, "label": "Elevator Cable (T3 - 鐵系)", "recipe": { "chassis": 3, "wafer": 1, "fuel": 1 } },
-    "terraform": { "tier": 3, "base_price": 8000, "label": "Terraformer (T3 - 鐵系)", "recipe": { "drone": 3, "wafer": 1, "fuel": 1 } },
+    "reactor": { "tier": 2, "series": "energy", "base_price": 3000, "label": "Micro Reactor (T2 - 能源系)", "recipe": { "fuel": 2, "iron": 1 } },
+    "laser": { "tier": 2, "series": "energy", "base_price": 3000, "label": "High-Energy Laser (T2 - 能源系)", "recipe": { "fuel": 1, "beam": 1, "iron": 1 } },
+    "shield": { "tier": 2, "series": "energy", "base_price": 3000, "label": "Magnetic Shield (T2 - 能源系)", "recipe": { "fuel": 1, "wafer": 1, "silicon": 1 } },
 
-    "warp_core": { "tier": 3, "base_price": 8000, "label": "Warp Core (T3 - 能源系)", "recipe": { "reactor": 3, "wafer": 1, "beam": 1 } },
-    "star_conv": { "tier": 3, "base_price": 8000, "label": "Star Converter (T3 - 能源系)", "recipe": { "laser": 3, "wafer": 1, "beam": 1 } }
+    "quantum": { "tier": 3, "series": "silicon", "base_price": 8000, "label": "Quantum Comm. (T3 - 矽晶系)", "recipe": { "processor": 3, "beam": 1, "fuel": 1 } },
+    "upload": { "tier": 3, "series": "silicon", "base_price": 8000, "label": "Mind Upload Chip (T3 - 矽晶系)", "recipe": { "scanner": 3, "beam": 1, "fuel": 1 } },
+
+    "elevator": { "tier": 3, "series": "iron", "base_price": 8000, "label": "Elevator Cable (T3 - 鐵系)", "recipe": { "chassis": 3, "wafer": 1, "fuel": 1 } },
+    "terraform": { "tier": 3, "series": "iron", "base_price": 8000, "label": "Terraformer (T3 - 鐵系)", "recipe": { "drone": 3, "wafer": 1, "fuel": 1 } },
+
+    "warp_core": { "tier": 3, "series": "energy", "base_price": 8000, "label": "Warp Core (T3 - 能源系)", "recipe": { "reactor": 3, "wafer": 1, "beam": 1 } },
+    "star_conv": { "tier": 3, "series": "energy", "base_price": 8000, "label": "Star Converter (T3 - 能源系)", "recipe": { "laser": 3, "wafer": 1, "beam": 1 } },
+    
+    "diamond": { "tier": 4, "series": "special", "base_price": 15000, "label": "Diamond (特殊 - 鑽石)", "recipe": {} }
   },
   "events": [
     {
