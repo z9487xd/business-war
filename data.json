@@ -92,9 +92,9 @@
   },
 
   "items": {
-    "silicon": { "tier": 0, "series": "silicon", "base_price": 500, "label": "Silicon (T0 原料)" },
-    "iron": { "tier": 0, "series": "iron", "base_price": 500, "label": "Iron (T0 原料)" },
-    "energy": { "tier": 0, "series": "energy", "base_price": 500, "label": "Energy Stone (T0 原料)" },
+    "silicon": { "tier": 0, "series": "silicon", "base_price": 500, "label": "矽晶 (T0 原料)" },
+    "iron": { "tier": 0, "series": "iron", "base_price": 500, "label": "鐵 (T0 原料)" },
+    "energy": { "tier": 0, "series": "energy", "base_price": 500, "label": "能源石 (T0 原料)" },
 
     "wafer": { "tier": 1, "series": "silicon", "base_price": 1200, "label": "Standard Wafer (T1 - 矽晶系)", "recipe": { "silicon": 2 } },
     "beam": { "tier": 1, "series": "iron", "base_price": 1200, "label": "Industrial Beam (T1 - 鐵系)", "recipe": { "iron": 2 } },

@@ -418,7 +418,8 @@ class GameEngine:
         # 1. 優先處理政府收購 (Gov Execution)
         if self.active_gov_event and self.gov_orders:
             gov_logs = self._execute_gov_auction(players)
-            match_logs.extend(gov_logs)
+            if gov_logs:
+                match_logs.extend(gov_logs)
             
         # 2. 處理一般市場撮合
         item_orders = {}
@@ -438,12 +439,14 @@ class GameEngine:
             
             if volume > 0:
                 self.market_prices[item_id] = clearing_price # Update market price
-                match_logs.append(f"📈 市場撮合：【{item_name}】結算價 ${clearing_price}，共成交 {volume} 個！")
+                match_logs.append(f"市場撮合：【{item_name}】結算價 ${clearing_price}，共成交 {volume} 個！")
                 
-                # 🌟 修改：接收 _settle 回傳的詳細日誌並加入總列表
+                # 🌟 接收 _settle 回傳的詳細日誌並加入總列表
                 detailed_logs = self._settle(players, bids, asks, clearing_price, volume, item_id)
-                match_logs.extend(detailed_logs)
+                if detailed_logs:
+                    match_logs.extend(detailed_logs)
             else:
+                # 即使沒有成交，也要呼叫 _settle 來執行退款與退物
                 self._settle(players, bids, asks, clearing_price, 0, item_id)
         
         # 清空所有訂單
@@ -610,7 +613,7 @@ class GameEngine:
                 seller.money += actual_cost
                 
                 # 🌟 新增：記錄玩家間的交易
-                settle_logs.append(f"🤝 玩家交易：【{buyer.name}】向【{seller.name}】購買了 {trade_amt} 個 {item_name} (總價 ${actual_cost})")
+                settle_logs.append(f"【市場撮合】{buyer.name} 成功向 {seller.name} 購買 {trade_amt} 個 {item_name} (單價: ${price})")
 
                 bid.quantity -= trade_amt
                 ask.quantity -= trade_amt
@@ -723,7 +726,7 @@ class GameEngine:
                     
             if tax_total > 0:
                 p.money -= tax_total
-                player_logs.append(f"📦 倉儲超載稅：扣除 ${tax_total}")
+                player_logs.append(f"倉儲超載稅：扣除 ${tax_total}")
 
             # --- B. 事件檢定與懲罰 ---
             has_defense = any(f.name == "Defense" for f in p.factories) # 檢查是否有防災中心
@@ -734,38 +737,45 @@ class GameEngine:
                 
                 if p.inventory.get(req_item, 0) >= req_qty:
                     p.inventory[req_item] -= req_qty
-                    player_logs.append(f"🛡️ 成功上繳 {req_qty} 個 {config.ITEMS[req_item]['label']} 抵禦災害！")
+                    player_logs.append(f" 成功上繳 {req_qty} 個 {config.ITEMS[req_item]['label']} 抵禦災害！")
                 elif has_defense:
-                    player_logs.append(f"🛡️ 防災中心啟動！完美抵禦了災害！")
+                    player_logs.append(f" 防災中心啟動！完美抵禦了災害！")
                 else:
                     penalty = event["penalty"]
                     if penalty == "SHUTDOWN_FACILITIES":
                         for f in p.factories: setattr(f, "is_shutdown", True) # 標記停擺
-                        player_logs.append("💥 災害命中：所有設施下回合停擺！")
+                        player_logs.append(" 災害命中：所有設施下回合停擺！")
                     elif penalty == "HALVE_CASH":
                         lost = p.money - int(p.money * 0.5)
                         p.money = int(p.money * 0.5)
-                        player_logs.append(f"💥 災害命中：現金減半 (損失 ${lost})！")
+                        player_logs.append(f" 災害命中：現金減半 (損失 ${lost})！")
                     elif penalty == "DESTROY_FACTORY":
                         if p.factories:
                             import random
                             f_to_destroy = random.choice(p.factories)
                             p.factories.remove(f_to_destroy)
-                            player_logs.append(f"💥 災害命中：{f_to_destroy.name} 被摧毀了！")
+                            player_logs.append(f" 災害命中：{f_to_destroy.name} 被摧毀了！")
 
             elif event.get("type") == "SPECIAL" and event.get("logic_key") == "LAND_TAX_BEAM":
                 if p.land_limit > 5:
                     if p.inventory.get("beam", 0) >= 7:
                         p.inventory["beam"] -= 7
-                        player_logs.append("🏗️ 扣除 7 個工業鋼樑維護擴充的土地。")
+                        player_logs.append(" 扣除 7 個工業鋼樑維護擴充的土地。")
                     else:
                         if p.factories:
                             import random
                             f_to_destroy = random.choice(p.factories)
                             p.factories.remove(f_to_destroy)
-                            player_logs.append(f"⚠️ 鋼樑不足！擴充土地上的 {f_to_destroy.name} 崩塌了！")
-                            
+                            player_logs.append(f" 鋼樑不足！擴充土地上的 {f_to_destroy.name} 崩塌了！")
+            if p.money > 0:
+                original_money = p.money
+                # 這裡設定倍率為 1.2 (也就是 +20%)
+                p.money = int(p.money * 1.2)
+                interest = p.money - original_money
+                player_logs.append(f"資本複利：資產增長 20% (收益 +${interest:,})")
+
+            # 彙整該玩家的日誌
             if player_logs:
-                logs.append(f"【{p.name}】 " + " | ".join(player_logs))
+                logs.append(f"【{p.name}】 " + " | ".join(player_logs))                        
                 
         return logs

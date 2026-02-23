@@ -75,6 +75,13 @@ async def get_admin_data():
 
 @app.post("/api/register")
 async def register_player(data: RegisterModel):
+    # 🌟 攔截幽靈玩家：如果名字已經存在，直接讓他「登入」原帳號
+    for pid, p in players.items():
+        if p.name == data.name:
+            log_event(f"玩家重連: {data.name} 回到了遊戲")
+            return {"status": "success", "player_id": pid, "name": data.name}
+
+    # 如果是全新的名字，才創建新帳號
     new_id = str(uuid.uuid4())
     init_factory = Factory(id=str(uuid.uuid4())[:8], tier=0, name="Miner")
     
@@ -239,14 +246,18 @@ async def next_phase():
     log_event(f"--- 管理員切換階段: 從 {current_phase} 結束 ---")
 
     if current_phase == 3:
-        match_logs = engine.execute_call_auction(players)
+        # 🌟 核心修改：接收撮合引擎回傳的交易日誌 (List[str])
+        auction_logs = engine.execute_call_auction(players)
+        
+        # 如果有交易成功，就把每一筆交易印到 Admin 廣播日誌上
+        if auction_logs:
+            for alog in auction_logs:
+                log_event(alog)
+                
         current_phase = 4
         log_event("市場撮合完成，進入結算階段")
         
-        for log in match_logs:
-            log_event(log)
-        
-        # 🌟 新增：呼叫我們剛剛寫的結算機制 (扣稅、事件懲罰)
+        # 呼叫結算機制 (扣稅、事件懲罰、複利)
         end_turn_logs = engine.process_end_of_turn(players)
         for l in end_turn_logs:
             log_event(l)
