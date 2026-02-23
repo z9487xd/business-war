@@ -93,7 +93,7 @@ function setTradeMode(mode) {
 }
 
 // ==========================================
-// 2. 倉庫智能驗證邏輯
+// 2. 倉庫智能驗證邏輯 (支援特殊設施系別判斷)
 // ==========================================
 function checkMaterialValidity(itemId, playerQty, action, targetId) {
     const meta = itemsMeta[itemId];
@@ -110,7 +110,6 @@ function checkMaterialValidity(itemId, playerQty, action, targetId) {
         if (!f) return {valid: false, reason: "找不到該設施"};
         
         if (f.name.includes("Miner")) {
-            // 【修正】採集器升級規則
             if (f.tier === 0) {
                 if (meta.tier !== 1) return {valid: false, reason: "需 T1 物品"};
                 if (playerQty < 3) return {valid: false, reason: "數量不足 3 個"};
@@ -126,7 +125,6 @@ function checkMaterialValidity(itemId, playerQty, action, targetId) {
                 return {valid: true};
             }
         } else {
-            // 加工廠升級規則
             if (f.tier === 1) {
                 if (meta.tier !== 1) return {valid: false, reason: "必須是 T1 產品"};
                 if (playerQty < 5) return {valid: false, reason: "數量不足 5 個"};
@@ -140,13 +138,27 @@ function checkMaterialValidity(itemId, playerQty, action, targetId) {
         }
     }
     
+    // 特殊建築驗證邏輯
     if (action.startsWith('special_')) {
         if (action.includes('land') && meta.tier !== 3) return {valid: false, reason: "需 T3 物品"};
-        if (action.includes('diamond') && meta.tier !== 2) return {valid: false, reason: "需 T2 物品"};
-        if (action.includes('prophet') && meta.tier !== 3) return {valid: false, reason: "需 T3 物品"};
-        if (action.includes('defense') && meta.tier !== 3) return {valid: false, reason: "需 T3 物品"};
-        if (action.includes('omni') && meta.tier !== 3) return {valid: false, reason: "需 T3 物品"};
-        if (action.includes('accelerator') && meta.tier !== 3) return {valid: false, reason: "需 T3 物品"};
+        
+        if (action.includes('diamond')) {
+            if (meta.tier !== 2) return {valid: false, reason: "需 T2 物品"};
+            if (meta.series && meta.series === 'energy') return {valid: false, reason: "不需要能源系"};
+        }
+        
+        if (action.includes('defense') || action.includes('accelerator')) {
+            if (meta.tier !== 3) return {valid: false, reason: "需 T3 物品"};
+            if (meta.series && meta.series === 'silicon') return {valid: false, reason: "不需要矽晶系"};
+        }
+        
+        if (action.includes('omni')) {
+            if (meta.tier !== 3) return {valid: false, reason: "需 T3 物品"};
+            if (meta.series && meta.series !== 'energy') return {valid: false, reason: "萬能工廠只需能源系"};
+        }
+        
+        if (action.includes('prophet')) return {valid: false, reason: "預言家功能已關閉"};
+        
         return {valid: true};
     }
     return {valid: true};
@@ -165,6 +177,23 @@ function openWarehouseModal(actionType, targetId = null) {
     
     const grid = document.getElementById("warehouse-selection-grid");
     grid.innerHTML = ""; 
+
+    // 🌟 動態加入操作提示文字，讓玩家知道特殊建築要選什麼
+    let helpText = "請選擇你要使用的材料：";
+    if (actionType === 'special_land') helpText = "擴充土地：需 3 種【不同】的 T3 物品 (各扣 1 個)";
+    else if (actionType === 'special_diamond') helpText = "鑽石場：需 矽晶T2 與 鐵系T2 (各扣 4 個)";
+    else if (actionType === 'special_defense') helpText = "防災中心：需 鐵系T3(扣1) + 能源T3(扣2)";
+    else if (actionType === 'special_omni') helpText = "萬能工廠：需 能源T3 (扣 3 個)";
+    else if (actionType === 'special_accelerator') helpText = "加速器：需 鐵系T3(扣2) + 能源T3(扣2)";
+    else if (actionType === 'buildFactory') helpText = "建造 T1 加工廠：需 2 種【不同】的 T0 物品 (各扣 3 個)";
+    
+    const descDiv = document.createElement("div");
+    descDiv.style.gridColumn = "1 / -1";
+    descDiv.style.color = "#f39c12";
+    descDiv.style.marginBottom = "10px";
+    descDiv.style.fontWeight = "bold";
+    descDiv.innerText = helpText;
+    grid.appendChild(descDiv);
 
     for (const [itemId, qty] of Object.entries(currentPlayerInventory)) {
         if (qty <= 0) continue;
@@ -197,8 +226,8 @@ function openWarehouseModal(actionType, targetId = null) {
         grid.appendChild(btn);
     }
 
-    if (grid.innerHTML === "") {
-        grid.innerHTML = "<div style='color:#777; grid-column: 1 / -1; text-align: center;'>倉庫目前沒有物資可用</div>";
+    if (grid.children.length === 1) { // 只有提示文字，沒有按鈕
+        grid.innerHTML += "<div style='color:#777; grid-column: 1 / -1; text-align: center;'>倉庫目前沒有物資可用</div>";
     }
 
     document.getElementById("warehouse-modal").classList.remove("hidden");
@@ -218,7 +247,7 @@ async function submitWarehouseSelection() {
     } else if (pendingAction === 'upgrade') {
         await post("/api/upgrade", {player_id: playerId, factory_id: pendingTargetId, payment_materials: selectedMaterials}); 
     } else if (pendingAction.startsWith('special_')) {
-        const specialType = pendingAction.replace('special_', '');
+        const specialType = pendingAction; // 保留前綴，因為後端依賴 'special_diamond' 等字眼
         await post("/api/build_special", {player_id: playerId, building_type: specialType, payment_materials: selectedMaterials}); 
     }
     closeWarehouseModal();
@@ -295,9 +324,7 @@ function updateUI(state) {
     document.getElementById("action-panel").classList.toggle("hidden", phase !== 2);
     document.getElementById("trading-panel").classList.toggle("hidden", phase !== 3);
 
-    // ==========================================
     // 更新政府收購介面
-    // ==========================================
     if (govEvent && govEvent.targets) {
         let targetsHtml = "";
         let govOptions = "";
@@ -308,11 +335,15 @@ function updateUI(state) {
             targetsHtml += `<div>🔸 ${meta.label}: 收購價 <span style="color:#2ecc71;">$${gPrice}</span> (市價 $${mPrice})</div>`;
             govOptions += `<option value="${t}">${meta.label} ($${gPrice})</option>`;
         });
-        document.getElementById("gov-target-list").innerHTML = targetsHtml;
-        document.getElementById("gov-trade-item").innerHTML = govOptions;
+        const targetList = document.getElementById("gov-target-list");
+        if(targetList) targetList.innerHTML = targetsHtml;
+        const tradeItem = document.getElementById("gov-trade-item");
+        if(tradeItem) tradeItem.innerHTML = govOptions;
     } else {
-        document.getElementById("gov-target-list").innerHTML = "(本回合無收購案)";
-        document.getElementById("gov-trade-item").innerHTML = "";
+        const targetList = document.getElementById("gov-target-list");
+        if(targetList) targetList.innerHTML = "(本回合無收購案)";
+        const tradeItem = document.getElementById("gov-trade-item");
+        if(tradeItem) tradeItem.innerHTML = "";
     }
 
     if (state.player) {
@@ -341,17 +372,15 @@ function updateUI(state) {
 
     const gameOverModal = document.getElementById("game-over-modal");
     if (phase === 5 && state.final_ranking && state.player) {
-        gameOverModal.style.display = "flex";
-        // ... (保持結算邏輯不變) ...
+        if(gameOverModal) gameOverModal.style.display = "flex";
     } else {
-        gameOverModal.style.display = "none";
+        if(gameOverModal) gameOverModal.style.display = "none";
     }
 }
 
 function renderFactoriesSmart(factories, phase) {
     const list = document.getElementById("factory-list");
     
-    // 1. 如果工廠總數改變 (新建或拆除)，整個列表重新渲染
     if (list.children.length !== factories.length) {
         list.innerHTML = ""; 
         factories.forEach(f => {
@@ -359,10 +388,9 @@ function renderFactoriesSmart(factories, phase) {
             div.className = "factory-box";
             div.id = `factory-box-${f.id}`; 
             
-            // 將布林值強制轉為字串儲存，避免型別 Bug
-            div.dataset.tier = f.tier;             
+            div.dataset.tier = f.tier;            
             div.dataset.produced = f.has_produced ? "true" : "false"; 
-            div.dataset.phase = phase;             
+            div.dataset.phase = phase;            
             
             div.innerHTML = generateFactoryInnerHtml(f, phase);
             list.appendChild(div);
@@ -372,42 +400,33 @@ function renderFactoriesSmart(factories, phase) {
         return;
     }
 
-    // 2. 如果數量沒變，針對單一工廠檢查
     factories.forEach((f, index) => {
         const div = document.getElementById(`factory-box-${f.id}`);
         if (!div) return; 
 
-        // 完美比對字串與數值，解決每秒無限重繪的 Bug
         const tierChanged = div.dataset.tier != f.tier;
         const currentProducedStr = f.has_produced ? "true" : "false";
         const producedChanged = div.dataset.produced !== currentProducedStr;
         const phaseChanged = div.dataset.phase != phase;
 
-        // 只有在真正升級、開採狀態改變、或切換階段時才重繪 HTML
         if (tierChanged || producedChanged || phaseChanged) {
-            
-            // 🌟 記憶功能：重繪前，先記住玩家目前選到一半的下拉選單與輸入的數量
             const selectEl = document.getElementById(`prod-${f.id}`);
             const oldVal = selectEl ? selectEl.value : null;
             const qtyEl = document.getElementById(`qty-${f.id}`);
             const oldQty = qtyEl ? qtyEl.value : null;
 
-            // 執行重繪
             div.innerHTML = generateFactoryInnerHtml(f, phase);
             
-            // 更新狀態標籤
             div.dataset.tier = f.tier;
             div.dataset.produced = currentProducedStr;
             div.dataset.phase = phase;
 
-            // 🌟 恢復功能：重繪後，立刻把玩家剛剛輸入的東西塞回去！
             const newSelectEl = document.getElementById(`prod-${f.id}`);
             if (newSelectEl && oldVal) newSelectEl.value = oldVal;
             const newQtyEl = document.getElementById(`qty-${f.id}`);
             if (newQtyEl && oldQty) newQtyEl.value = oldQty;
         } 
         
-        // 如果狀態沒變，我們只默默幫玩家檢查配方 (庫存變化的綠/紅字)，絕不干擾選單
         if (phase === 2 && document.getElementById(`prod-${f.id}`)) {
             checkRecipe(f.id);
         }
@@ -421,6 +440,7 @@ function generateFactoryInnerHtml(f, phase) {
     
     let demolishCost = 0;
     if (isMiner) demolishCost = 250; 
+    else if (isSpecial) demolishCost = 4000;
     else {
         if (f.tier === 1) demolishCost = 500;
         else if (f.tier === 2) demolishCost = 1000;
@@ -428,8 +448,17 @@ function generateFactoryInnerHtml(f, phase) {
     }
 
     if (phase === 2) {
-        if (isSpecial) {
-            actionHtml = `<div style="padding: 10px 0; color: #f1c40f; text-align: center; font-weight: bold; background: rgba(0,0,0,0.2); border-radius: 4px; margin-bottom: 5px;">被動效果啟用中</div>`;
+        // 🌟 鑽石場需要專屬的生產按鈕
+        if (f.name === "Diamond Mine") {
+            actionHtml = `
+                <div class="row" style="gap:5px; margin-bottom: 5px;">
+                    <input type="hidden" id="prod-${f.id}" value="diamond">
+                    <input type="number" id="qty-${f.id}" value="1" min="1" style="flex:1; padding:8px;" placeholder="量">
+                    <button class="btn btn-green" style="flex:1; margin:0;" onclick="produce('${f.id}')">💎 生產鑽石</button>
+                </div>
+            `;
+        } else if (isSpecial) {
+            actionHtml = `<div style="padding: 10px 0; color: #f1c40f; text-align: center; font-weight: bold; background: rgba(0,0,0,0.2); border-radius: 4px; margin-bottom: 5px;">⚡ 被動效果啟用中</div>`;
         } else if (isMiner) {
             if (f.has_produced) {
                 actionHtml = `<span style="color: #aaa;">本回合已開採</span>`;
@@ -465,7 +494,6 @@ function generateFactoryInnerHtml(f, phase) {
         if (f.tier < 3 && !isSpecial) {
             let req = "";
             if (isMiner) {
-                // 【修正】採集器按鈕顯示文字
                 if (f.tier === 0) req = "需: 1種 T1產品(3個)"; 
                 else if (f.tier === 1) req = "需: 1種 T2產品(3個)"; 
                 else if (f.tier === 2) req = "需: 1種 T2(3個) + 1種 T1(3個)"; 
@@ -485,7 +513,6 @@ function generateFactoryInnerHtml(f, phase) {
         actionHtml = `<span style="color: #666; font-size: 0.9em;">等待行動階段...</span>`;
     }
 
-    // 【修正】強制過濾掉原本被寫死的 "Factory T1" 字眼，只留下「加工廠」
     let displayName = f.name
         .replace("Miner", "採集器")
         .replace("Factory T1", "加工廠") 
@@ -577,8 +604,9 @@ async function submitOrder() {
             item_id: document.getElementById("trade-item").value, price: price, quantity: qty
         });
     } else {
-        // 政府投標模式：強制抓取計算好的固定 1.5 倍價格
-        const itemId = document.getElementById("gov-trade-item").value;
+        const itemEl = document.getElementById("gov-trade-item");
+        if(!itemEl) return;
+        const itemId = itemEl.value;
         const qty = parseInt(document.getElementById("gov-trade-qty").value);
         if(!itemId || !qty) return showToast("請輸入有效的數量", "error");
         
@@ -590,6 +618,7 @@ async function submitOrder() {
         });
     }
 }
+
 async function post(url, data) {
     try {
         const res = await fetch(url, { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(data) });

@@ -70,58 +70,91 @@ class GameEngine:
     
 # --- Phase 2: Production ---
     def process_production(self, player: PlayerState, factory_id: str, target_item: str, quantity: int) -> Tuple[bool, str]:
-        # 1. 尋找對應的設施
         factory = next((f for f in player.factories if f.id == factory_id), None)
-        if not factory: 
-            return False, "找不到該設施"
+        if not factory: return False, "找不到該設施"
             
-        # 2. 檢查停擺狀態 
         if getattr(factory, "is_shutdown", False):
             return False, "該設施因天災停擺中，本回合無法運作！"
             
         event = getattr(self, "current_event", {}) or {}
+        item_data = config.ITEMS.get(target_item)
 
         if "Miner" in factory.name:
             if getattr(factory, "has_produced", False):
                 return False, "該採集器本回合已經開採過了！"
-
-            if target_item not in config.ITEMS or config.ITEMS[target_item].get("tier") != 0:
+            if not item_data or item_data.get("tier") != 0:
                 return False, "採集器只能開採 T0 原料"
             
             base_output = config.MINER_OUTPUTS.get(factory.tier, 3)
             qty_produced = base_output * quantity
-        
             if event.get("special_effect") == "MINER_BOOST_1":
                 qty_produced += (1 * quantity)
                 
-            player.inventory[target_item] += qty_produced
+            player.inventory[target_item] = player.inventory.get(target_item, 0) + qty_produced
             factory.has_produced = True 
-            return True, f"開採了 {qty_produced} 個 {config.ITEMS[target_item]['label']}"
+            return True, f"開採了 {qty_produced} 個 {item_data['label']}"
             
         else:
-            item_data = config.ITEMS.get(target_item)
-            if not item_data or "recipe" not in item_data:
-                return False, "無效的配方"
+            if not item_data or "recipe" not in item_data: return False, "無效的配方"
+
+            # 針對鑽石場的特殊防呆
+            if target_item == "diamond":
+                if factory.name != "Diamond Mine":
+                    return False, "只有鑽石場可以生產鑽石！"
+            else:
+                if factory.tier < item_data["tier"]:
+                    return False, f"工廠等級不足 (需要 T{item_data['tier']})"
             
-            if factory.tier < item_data["tier"]:
-                return False, f"工廠等級不足 (需要 T{item_data['tier']})"
-            
-      
+            is_omni = (factory.name == "Omni Factory")
+            is_accelerator = (factory.name == "Accelerator")
+
+            # 1. 檢查原料是否充足 (萬能工廠可支援同階級替代)
             for ing_id, req_qty in item_data["recipe"].items():
-                if player.inventory.get(ing_id, 0) < req_qty * quantity:
-                    return False, f"原料不足: 缺少 {config.ITEMS[ing_id]['label']} (需要 {req_qty * quantity} 個)"
-        
-            for ing_id, req_qty in item_data["recipe"].items():
-                player.inventory[ing_id] -= req_qty * quantity
-            
-            qty_produced = quantity
-     
-            if factory.name == "Diamond Mine" and event.get("logic_key") == "DIAMOND_BOOST":
-                qty_produced *= 2
+                total_needed = req_qty * quantity
+                if player.inventory.get(ing_id, 0) >= total_needed:
+                    continue
                 
-            player.inventory[target_item] += qty_produced            
+                if is_omni:
+                    req_tier = config.ITEMS[ing_id]["tier"]
+                    shortage = total_needed - player.inventory.get(ing_id, 0)
+                    # 尋找所有同階級的替代品數量
+                    subs_found = sum(qty for sub_id, qty in player.inventory.items() 
+                                     if sub_id != ing_id and config.ITEMS.get(sub_id, {}).get("tier") == req_tier)
+                    if subs_found < shortage:
+                        return False, f"原料或同等級替代品不足: 缺少 {config.ITEMS[ing_id]['label']} (需 {total_needed} 個)"
+                else:
+                    return False, f"原料不足: 缺少 {config.ITEMS[ing_id]['label']} (需 {total_needed} 個)"
+        
+            # 2. 扣除原料 (含萬能工廠的代扣邏輯)
+            for ing_id, req_qty in item_data["recipe"].items():
+                total_needed = req_qty * quantity
+                exact_have = player.inventory.get(ing_id, 0)
+                
+                if exact_have >= total_needed:
+                    player.inventory[ing_id] -= total_needed
+                elif is_omni:
+                    player.inventory[ing_id] = 0
+                    shortage = total_needed - exact_have
+                    req_tier = config.ITEMS[ing_id]["tier"]
+                    # 依序扣除其他同階級物品直到補足 shortage
+                    for sub_id in list(player.inventory.keys()):
+                        if shortage <= 0: break
+                        if sub_id != ing_id and config.ITEMS.get(sub_id, {}).get("tier") == req_tier:
+                            take = min(player.inventory[sub_id], shortage)
+                            player.inventory[sub_id] -= take
+                            shortage -= take
+
+            # 3. 計算產量與增益
+            qty_produced = quantity
+            if is_accelerator:
+                qty_produced *= 2 # 加速器產量翻倍
+                
+            if factory.name == "Diamond Mine" and event.get("logic_key") == "DIAMOND_BOOST":
+                qty_produced *= 2 # 疊加鑽石爆發事件
+                
+            player.inventory[target_item] = player.inventory.get(target_item, 0) + qty_produced 
+            factory.has_produced = True           
             return True, f"生產了 {qty_produced} 個 {item_data['label']}"
-    
     def process_build_new(self, player: PlayerState, target_tier: int, materials: List[str]) -> Tuple[bool, str]:
         if len(player.factories) >= player.land_limit: return False, "土地不足。"
 
@@ -162,77 +195,90 @@ class GameEngine:
         return False, "未知的建造類型。"
 
     def process_build_special(self, player: PlayerState, b_type: str, materials: List[str]) -> Tuple[bool, str]:
-        # 1. 土地空間檢查 (擴充土地除外)
-        if b_type != "land" and len(player.factories) >= player.land_limit:
+        # 1. 取得設定檔中的規則
+        fac_config = config.SPECIAL_FACILITIES.get(b_type)
+        if not fac_config:
+            return False, "未知的特殊建築類型"
+
+        # 2. 土地空間檢查 (擴充土地除外)
+        if b_type != "special_land" and len(player.factories) >= player.land_limit:
             return False, "土地空間不足，請先擴充土地！"
 
         mats = [m for m in materials if m] # 過濾空值
         
-        # 2. 定義物品系別 (對應 T2 與 T3)
-        ITEM_FAMILIES = {
-            "silicon_t2": ["processor", "projector", "scanner"],
-            "iron_t2": ["chassis", "drone", "thruster"],
-            "energy_t2": ["reactor", "laser", "shield"],
-            "silicon_t3": ["quantum", "upload"],
-            "iron_t3": ["elevator", "terraform"],
-            "energy_t3": ["warp_core", "star_conv"]
-        }
-
-        # 3. 處理「擴充土地」邏輯
-        if b_type == "land":
+        # 3. 處理「UNIQUE_TIER」邏輯 (例如：擴充土地)
+        if fac_config["cost_rule"] == "UNIQUE_TIER":
+            req_tier = fac_config["costs"]["tier"]
+            req_unique = fac_config["costs"]["unique_qty"]
+            req_qty = fac_config["costs"]["qty_per_item"]
+            
             unique_mats = list(set(mats))
-            if len(unique_mats) < 3: return False, "擴充土地需要「3 種不同」的 T3 物品，請在選單分別選擇！"
+            # 先過濾出符合等級的材料
+            valid_tier_mats = [m for m in unique_mats if config.ITEMS.get(m, {}).get("tier") == req_tier]
             
-            t3_mats = [m for m in unique_mats[:3] if config.ITEMS.get(m, {}).get("tier") == 3]
-            if len(t3_mats) < 3: return False, "選擇的材料必須都是 T3 等級！"
+            if len(valid_tier_mats) < req_unique: 
+                return False, f"選擇的材料必須包含 {req_unique} 種不同的 T{req_tier} 物品！"
             
-            for m in t3_mats:
-                if player.inventory.get(m, 0) < 1: return False, f"缺乏 {config.ITEMS[m]['label']}"
-                
-            for m in t3_mats: player.inventory[m] -= 1
+            valid_mats = valid_tier_mats[:req_unique]
+            for m in valid_mats:
+                if player.inventory.get(m, 0) < req_qty: 
+                    return False, f"缺乏 {config.ITEMS[m]['label']} (需要 {req_qty} 個)"
+            
+            # 扣除庫存並生效
+            for m in valid_mats: 
+                player.inventory[m] -= req_qty
             player.land_limit += 1
             return True, "成功擴充 1 單位的土地！"
 
-        # 4. 定義特殊建築需求
-        reqs = {}
-        name = ""
-        tier = 3
-        if b_type == "diamond": reqs = {"silicon_t2": 4, "iron_t2": 4}; name = "Diamond Mine"; tier = 2
-        elif b_type == "prophet": reqs = {"silicon_t3": 3}; name = "Prophet"
-        elif b_type == "defense": reqs = {"iron_t3": 1, "energy_t3": 2}; name = "Defense"
-        elif b_type == "omni": reqs = {"energy_t3": 3}; name = "Omni Factory"
-        elif b_type == "accelerator": reqs = {"iron_t3": 2, "energy_t3": 1}; name = "Accelerator"
-        else: return False, "未知的建築類型"
-
-        # 5. 驗證玩家提供的材料是否符合系別與數量
-        matched_items = {}
-        available_mats = list(mats) 
-        
-        for family, qty in reqs.items():
-            # 尋找下拉選單中符合該系別的物品
-            found_item = next((m for m in available_mats if m in ITEM_FAMILIES[family]), None)
-            if not found_item:
-                fam_name = family.replace("silicon", "矽晶").replace("iron", "鐵").replace("energy", "能源").upper()
-                return False, f"付款材料缺少對應的【{fam_name}】物品！"
+        # 4. 處理「SERIES_AND_TIER」邏輯 (其他實體設施)
+        elif fac_config["cost_rule"] == "SERIES_AND_TIER":
+            reqs = fac_config["costs"] # e.g. {"silicon_2": 4, "iron_2": 4}
+            matched_items = {}
+            available_mats = list(mats) 
             
-            if player.inventory.get(found_item, 0) < qty:
-                return False, f"{config.ITEMS[found_item]['label']} 數量不足 (需 {qty} 個)！"
+            for req_key, req_qty in reqs.items():
+                req_series, req_tier_str = req_key.split("_")
+                req_tier = int(req_tier_str)
                 
-            matched_items[family] = found_item
-            available_mats.remove(found_item) # 避免重複判定
+                # 尋找玩家選擇中，符合該系別與等級的物品
+                found_item = None
+                for m in available_mats:
+                    item_data = config.ITEMS.get(m)
+                    if item_data and item_data.get("series") == req_series and item_data.get("tier") == req_tier:
+                        found_item = m
+                        break
+                        
+                if not found_item:
+                    fam_name = {"silicon": "矽晶", "iron": "鐵", "energy": "能源"}.get(req_series, req_series)
+                    return False, f"付款材料缺少對應的【{fam_name}系 T{req_tier}】物品！"
+                
+                if player.inventory.get(found_item, 0) < req_qty:
+                    return False, f"{config.ITEMS[found_item]['label']} 數量不足 (需 {req_qty} 個)！"
+                    
+                matched_items[req_key] = {"item": found_item, "qty": req_qty}
+                available_mats.remove(found_item) # 避免重複判定
 
-        # 6. 扣除庫存並建立建築
-        for family, qty in reqs.items():
-            item = matched_items[family]
-            player.inventory[item] -= qty
+            # 扣除庫存
+            for req_key, match in matched_items.items():
+                player.inventory[match["item"]] -= match["qty"]
+                
+            # 決定設施內部的識別名稱與階級
+            name_mapping = {
+                "special_diamond": ("Diamond Mine", 4), # 設為 T4 讓它可以讀到鑽石配方
+                "special_defense": ("Defense", 3),
+                "special_omni": ("Omni Factory", 3),
+                "special_accelerator": ("Accelerator", 3)
+            }
+            name, tier = name_mapping.get(b_type, (fac_config["label"], 3))
             
-        # 🌟 特殊建築：建好當下可立刻啟動被動效果
-        new_special = Factory(id=str(uuid.uuid4())[:8], tier=tier, name=name)
-        new_special.has_produced = False 
-        player.factories.append(new_special)
-        
-        name_zh = {"Diamond Mine": "鑽石場", "Prophet": "預言家", "Defense": "防災中心", "Omni Factory": "萬能工廠", "Accelerator": "加速器"}[name]
-        return True, f"成功建造特殊建築：{name_zh}！"
+            # 建立特殊設施
+            new_special = Factory(id=str(uuid.uuid4())[:8], tier=tier, name=name)
+            new_special.has_produced = False 
+            player.factories.append(new_special)
+            
+            return True, f"成功建造特殊建築：{fac_config['label']}！"
+            
+        return False, "設定檔規則解析錯誤"
     
     # --- Phase 2: Upgrade ---
     def process_upgrade(self, player: PlayerState, factory_id: str, materials: List[str]) -> Tuple[bool, str]:

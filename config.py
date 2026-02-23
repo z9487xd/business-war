@@ -41,6 +41,7 @@ MINER_OUTPUTS = {int(k): v for k, v in miners["outputs"].items()}
 ITEMS = data["items"]
 EVENTS_DB = data["events"]
 GOV_ACQUISITIONS = data["gov_acquisitions"]
+SPECIAL_FACILITIES = data.get("special_facilities", {})
 
 # --- 輔助函式 ---
 def get_random_event():
