@@ -371,8 +371,35 @@ function updateUI(state) {
     populateDropdown("bank-item", rawMaterialsMeta, state.market_prices, 0.85);
 
     const gameOverModal = document.getElementById("game-over-modal");
-    if (phase === 5 && state.final_ranking && state.player) {
-        if(gameOverModal) gameOverModal.style.display = "flex";
+    if (state.final_ranking && state.player) {
+        gameOverModal.style.display = "flex";
+        // ... (保持結算邏輯不變) ...
+        const myName = state.player.name;
+        const rankingListBox = document.getElementById("global-ranking-list");
+        let listHtml = "";
+
+        // 生成排行榜
+        state.final_ranking.forEach((playerObj, index) => {
+            const rank = index + 1;
+            const pName = playerObj.name;
+            const scores = playerObj.scores;
+            const totalScore = scores.total_score;
+
+            if (pName === myName) {
+                // 更新上方自己的專屬名次
+                document.getElementById("my-final-rank").innerText = `你是第 ${rank} 名！`;
+                document.getElementById("my-final-assets").innerHTML = 
+                    `總資產: <b style="color: #4cd137;">$${totalScore.toLocaleString()}</b><br>` +
+                    `<span style="font-size: 0.85em;">現金: $${scores.cash?.toLocaleString() || 0} | 庫存價值: $${scores.inventory_value?.toLocaleString() || 0} | 設施價值: $${scores.factory_value?.toLocaleString() || 0}</span>`;
+
+                // 在排行榜中標記自己
+                listHtml += `<div style="padding: 10px; color: #ff9800; font-weight: bold; border-bottom: 1px solid #333;">#${rank} ${pName} - $${totalScore.toLocaleString()} (你)</div>`;
+            } else {
+                listHtml += `<div style="padding: 10px; border-bottom: 1px solid #333; color: #ccc;">#${rank} ${pName} - $${totalScore.toLocaleString()}</div>`;
+            }
+        });
+
+        rankingListBox.innerHTML = listHtml;
     } else {
         if(gameOverModal) gameOverModal.style.display = "none";
     }
