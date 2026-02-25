@@ -482,7 +482,7 @@ function generateFactoryInnerHtml(f, phase) {
             actionHtml = `
                 <div class="row" style="gap:5px; margin-bottom: 5px;">
                     <input type="hidden" id="prod-${f.id}" value="diamond">
-                    <input type="number" id="qty-${f.id}" value="1" min="1" style="flex:1; padding:8px;" placeholder="量">
+                    
                     <button class="btn btn-green" style="flex:1; margin:0;" onclick="produce('${f.id}')">💎 生產鑽石</button>
                 </div>
             `;
@@ -499,7 +499,7 @@ function generateFactoryInnerHtml(f, phase) {
                 actionHtml = `
                     <div class="row" style="gap:5px; margin-bottom: 5px;">
                         <select id="prod-${f.id}" style="flex:2;">${options}</select>
-                        <input type="number" id="qty-${f.id}" value="1" min="1" style="flex:1; padding:8px;" placeholder="量">
+                        
                         <button class="btn btn-green" style="flex:1; margin:0;" onclick="produce('${f.id}')">開採</button>
                     </div>`;
             }
