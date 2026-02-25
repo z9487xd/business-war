@@ -511,7 +511,7 @@ if (phase === 2) {
                 options = `<option value="${f.current_product}">${meta.label} (產線已鎖定)</option>`;
             } else {
                 for (const [code, meta] of Object.entries(itemsMeta)) {
-                    if (meta.tier > 0 && meta.tier <= f.tier) options += `<option value="${code}">${meta.label}</option>`;
+                    if (meta.tier > 0 && meta.tier === f.tier) options += `<option value="${code}">${meta.label}</option>`;
                 }
             }
 

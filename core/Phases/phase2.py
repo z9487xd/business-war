@@ -37,8 +37,8 @@ class Phase2Action:
                 if factory.name != "Diamond Mine":
                     return False, "只有鑽石場可以生產鑽石！"
             else:
-                if factory.tier < item_data["tier"]:
-                    return False, f"工廠等級不足 (需要 T{item_data['tier']})"
+                if factory.tier != item_data["tier"]:
+                    return False, f"工廠等級不符！T{factory.tier} 設施只能生產 T{item_data['tier']} 的產品。"
                 
             if getattr(factory, "has_produced", False):
                 locked_item = getattr(factory, "current_product", None)

@@ -84,7 +84,19 @@ async def register_player(data: RegisterModel):
     # 如果是全新的名字，才創建新帳號
     new_id = str(uuid.uuid4())
     init_factory = Factory(id=str(uuid.uuid4())[:8], tier=0, name="Miner")
-    
+
+    # #測試用
+    # test_t2_factory = Factory(id=str(uuid.uuid4())[:8], tier=2, name="Factory")
+    # cheat_inventory = {k: 50 for k in config.ITEMS.keys()}
+    # new_player = PlayerState(
+    #     id=new_id,
+    #     name=data.name,
+    #     money=1000000, # 🌟 測試用：直接給一百萬初始資金 (原本是 config.INITIAL_MONEY)
+    #     inventory=cheat_inventory, # 🌟 測試用：載入作弊庫存
+    #     factories=[init_factory, test_t2_factory], # 🌟 把 T2 工廠加進初始設施列表裡
+    #     land_limit=config.INITIAL_LAND
+    # )
+    # #...
     new_player = PlayerState(
         id=new_id,
         name=data.name,
