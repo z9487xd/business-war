@@ -39,7 +39,12 @@ class Phase2Action:
             else:
                 if factory.tier < item_data["tier"]:
                     return False, f"工廠等級不足 (需要 T{item_data['tier']})"
-            
+                
+            if getattr(factory, "has_produced", False):
+                locked_item = getattr(factory, "current_product", None)
+                if locked_item and locked_item != target_item:
+                    locked_name = config.ITEMS.get(locked_item, {}).get("label", locked_item)
+                    return False, f"產線已鎖定！此工廠本回合只能生產【{locked_name}】。"
             is_omni = (factory.name == "Omni Factory")
             is_accelerator = (factory.name == "Accelerator")
 
@@ -89,6 +94,7 @@ class Phase2Action:
                 
             player.inventory[target_item] = player.inventory.get(target_item, 0) + qty_produced 
             factory.has_produced = True           
+            factory.current_product = target_item     
             return True, f"生產了 {qty_produced} 個 {item_data['label']}"
 
     def process_build_new(self, player: PlayerState, target_tier: int, materials: List[str]) -> Tuple[bool, str]:

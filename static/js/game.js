@@ -476,13 +476,12 @@ function generateFactoryInnerHtml(f, phase) {
         else if (f.tier === 3) demolishCost = 4000;
     }
 
-    if (phase === 2) {
-        // 🌟 鑽石場需要專屬的生產按鈕
+if (phase === 2) {
         if (f.name === "Diamond Mine") {
             actionHtml = `
                 <div class="row" style="gap:5px; margin-bottom: 5px;">
                     <input type="hidden" id="prod-${f.id}" value="diamond">
-                    
+                    <input type="number" id="qty-${f.id}" value="1" min="1" style="flex:1; padding:8px;" placeholder="量">
                     <button class="btn btn-green" style="flex:1; margin:0;" onclick="produce('${f.id}')">💎 生產鑽石</button>
                 </div>
             `;
@@ -499,15 +498,23 @@ function generateFactoryInnerHtml(f, phase) {
                 actionHtml = `
                     <div class="row" style="gap:5px; margin-bottom: 5px;">
                         <select id="prod-${f.id}" style="flex:2;">${options}</select>
-                        
                         <button class="btn btn-green" style="flex:1; margin:0;" onclick="produce('${f.id}')">開採</button>
                     </div>`;
             }
         } else {
+
             let options = "";
-            for (const [code, meta] of Object.entries(itemsMeta)) {
-                if (meta.tier > 0 && meta.tier <= f.tier) options += `<option value="${code}">${meta.label}</option>`;
+            
+            if (f.has_produced && f.current_product) {
+                // 如果已經生產過，選單只剩下「鎖定」的那個產品
+                const meta = itemsMeta[f.current_product];
+                options = `<option value="${f.current_product}">${meta.label} (產線已鎖定)</option>`;
+            } else {
+                for (const [code, meta] of Object.entries(itemsMeta)) {
+                    if (meta.tier > 0 && meta.tier <= f.tier) options += `<option value="${code}">${meta.label}</option>`;
+                }
             }
+
             if (options) {
                 actionHtml = `
                     <div class="row" style="gap:5px; margin-bottom: 5px;">

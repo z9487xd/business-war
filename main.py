@@ -271,7 +271,7 @@ async def next_phase():
                     f.is_shutdown = False  # 解除標記
                 else:
                     f.has_produced = False
-        
+                f.current_product = None
         current_turn += 1
         engine.generate_daily_event(current_turn)
         current_phase = 1
