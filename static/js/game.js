@@ -298,9 +298,13 @@ function updateUI(state) {
     const modal = document.getElementById("news-modal-overlay");
     const ticker = document.getElementById("news-ticker-bar");
 
+    // 1. 新聞與政府收購的彈出視窗邏輯
+    // 產生一個聯合 ID，確保新聞或政府收購有變動時都會觸發視窗
+    const currentCombinedEventId = event.id + (govEvent ? govEvent.id : "no-gov");
+
     if (phase === 1) {
-        if (event.id !== lastSeenEventId) {
-            lastSeenEventId = event.id;
+        if (currentCombinedEventId !== lastSeenEventId) {
+            lastSeenEventId = currentCombinedEventId;
             isNewsOpen = true;
         }
         if (isNewsOpen) modal.classList.remove("hidden");
@@ -310,13 +314,37 @@ function updateUI(state) {
         document.getElementById("modal-title").innerText = event.title;
         document.getElementById("modal-desc").innerText = event.description;
         document.getElementById("modal-effect").innerText = event.effect_text;
+
+        // 更新新聞彈窗內的政府收購區塊
+        const govBox = document.getElementById("modal-gov-box");
+        if (govBox) {
+            if (govEvent) {
+                govBox.classList.remove("hidden");
+                
+                if (document.getElementById("modal-gov-desc")) {
+                    document.getElementById("modal-gov-desc").innerText = govEvent.description;
+                }
+                if (document.getElementById("modal-gov-targets")) {
+                    const targetsDisplay = govEvent.targets.map(t => itemsMeta[t]?.label || t).join("、");
+                    document.getElementById("modal-gov-targets").innerText = `${targetsDisplay} (溢價 50%)`;
+                }
+            } else {
+                govBox.classList.add("hidden");
+            }
+        }
     } else {
         modal.classList.add("hidden");
         ticker.classList.remove("hidden");
         let tickerText = `【${event.title}】 ${event.effect_text}`;
+        if (govEvent && govEvent.targets) {
+            const targetsDisplay = govEvent.targets.map(t => itemsMeta[t]?.label || t).join("、");
+            tickerText += `      ///    [官方] 【政府採購：${govEvent.title}】 目標：${targetsDisplay} (售價 +50%)`;
+        }
+
         document.getElementById("ticker-text").innerText = tickerText + "      ///      " + tickerText;
     }
 
+    // 2. 階段與面版切換
     const phaseNames = {1: "新聞階段", 2: "行動階段", 3: "交易階段", 4: "結算階段", 5: "遊戲結束"};
     const turnText = state.turn ? `(第 ${state.turn} 回合)` : "";
     document.getElementById("phase-display").innerText = `${phase}. ${phaseNames[phase] || "未知"} ${turnText}`;
@@ -324,28 +352,29 @@ function updateUI(state) {
     document.getElementById("action-panel").classList.toggle("hidden", phase !== 2);
     document.getElementById("trading-panel").classList.toggle("hidden", phase !== 3);
 
-    // 更新政府收購介面
+    // 3. 更新交易面版內的政府收購介面
+    const targetList = document.getElementById("gov-target-list");
+    const tradeItem = document.getElementById("gov-trade-item");
+    
     if (govEvent && govEvent.targets) {
         let targetsHtml = "";
         let govOptions = "";
         govEvent.targets.forEach(t => {
             const meta = itemsMeta[t];
-            const mPrice = currentMarketPrices[t] || meta.base_price;
+            // 修正：使用 state.market_prices 替代 currentMarketPrices 避免報錯
+            const mPrice = (state.market_prices && state.market_prices[t] !== undefined) ? state.market_prices[t] : meta.base_price;
             const gPrice = Math.floor(mPrice * 1.5);
             targetsHtml += `<div>🔸 ${meta.label}: 收購價 <span style="color:#2ecc71;">$${gPrice}</span> (市價 $${mPrice})</div>`;
             govOptions += `<option value="${t}">${meta.label} ($${gPrice})</option>`;
         });
-        const targetList = document.getElementById("gov-target-list");
-        if(targetList) targetList.innerHTML = targetsHtml;
-        const tradeItem = document.getElementById("gov-trade-item");
-        if(tradeItem) tradeItem.innerHTML = govOptions;
+        if (targetList) targetList.innerHTML = targetsHtml;
+        if (tradeItem) tradeItem.innerHTML = govOptions;
     } else {
-        const targetList = document.getElementById("gov-target-list");
-        if(targetList) targetList.innerHTML = "(本回合無收購案)";
-        const tradeItem = document.getElementById("gov-trade-item");
-        if(tradeItem) tradeItem.innerHTML = "";
+        if (targetList) targetList.innerHTML = "(本回合無收購案)";
+        if (tradeItem) tradeItem.innerHTML = "";
     }
 
+    // 4. 更新玩家狀態與工廠
     if (state.player) {
         currentPlayerState = state.player;
         currentPlayerInventory = state.player.inventory; 
@@ -363,6 +392,7 @@ function updateUI(state) {
         renderFactoriesSmart(state.player.factories, state.phase);
     }
     
+    // 5. 下拉選單更新
     populateDropdown("trade-item", state.items_meta, state.market_prices, 1.0);
     const rawMaterialsMeta = {};
     for (const [k, v] of Object.entries(state.items_meta)) {
@@ -370,19 +400,18 @@ function updateUI(state) {
     }
     populateDropdown("bank-item", rawMaterialsMeta, state.market_prices, 0.85);
 
-const gameOverModal = document.getElementById("game-over-modal");
+    // 6. 遊戲結束畫面
+    const gameOverModal = document.getElementById("game-over-modal");
+    const rankingListBox = document.getElementById("global-ranking-list");
+    let listHtml = "";
+
     if (state.final_ranking && state.player) {
-        // 🚨 修正：把 style.display 換成 classList.remove
         if(gameOverModal) gameOverModal.classList.remove("hidden");
         
         const myName = state.player.name;
-        const rankingListBox = document.getElementById("global-ranking-list");
-        let listHtml = "";
-
-        // 生成排行榜
+        
         state.final_ranking.forEach((playerObj, index) => {
             const rank = index + 1;
-            
             const pName = playerObj.name; 
             const scores = playerObj.scores; 
             const totalScore = scores.total_score;
@@ -402,7 +431,6 @@ const gameOverModal = document.getElementById("game-over-modal");
 
         if(rankingListBox) rankingListBox.innerHTML = listHtml;
     } else {
-        // 🚨 修正：把 style.display 換成 classList.add
         if(gameOverModal) gameOverModal.classList.add("hidden");
     }
 }

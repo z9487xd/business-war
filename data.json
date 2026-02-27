@@ -143,10 +143,11 @@
       "type": "DEFENSE_CHECK", "req_item": "upload", "req_qty": 1, "penalty": "HALVE_CASH"
     },
     {
-      "id": "EVT_04", "phase_req": "Early",
-      "title": "星際網路鋪設工程", "description": "聯盟宣布升級全宇宙的通訊網路，急需基礎導體。",
-      "effect_text": "系統無限量高價收購 T1 標準晶圓 (Wafer)。收購價為市價的 300%。",
-      "type": "GOV_BUY", "target": "wafer", "price_mult": 3.0, "limit": 999
+      "id": "EVT_04", "phase_req": "All",
+      "title": "小行星帶異常活躍", 
+      "description": "天文觀測站發現富含碎礦的微型隕石群進入各大星系，這讓原物料的開採變得異常容易。",
+      "effect_text": "產能爆發：本回合所有採集器 (Miner) 每次開採的產量額外 +1。",
+      "type": "SPECIAL", "special_effect": "MINER_BOOST_1"
     },
     {
       "id": "EVT_05", "phase_req": "Mid",
@@ -156,9 +157,10 @@
     },
     {
       "id": "EVT_06", "phase_req": "Mid",
-      "title": "量子計算競賽", "description": "各大企業競相開發次世代電腦，處理器供不應求。",
-      "effect_text": "T2 運算處理器 (Processor) 價格上限解鎖，且系統保底收購價 300%。",
-      "type": "GOV_BUY", "target": "processor", "price_mult": 3.0, "uncapped": true
+      "title": "星際海盜劫掠潮",
+      "description": "近期邊境航道上的海盜活動異常猖獗，各大商會與星際物流公司急忙為旗下運輸艦隊加裝武裝系統以求自保。",
+      "effect_text": "民間防衛需求激增！本回合「高能雷射 (Laser)」的市場價格暴漲至 200%。",
+      "type": "PRICE_MOD", "target": "laser", "price_mult": 2.0
     },
     {
       "id": "EVT_07", "phase_req": "Mid",
@@ -167,13 +169,13 @@
       "type": "TRADE_BAN", "target": "reactor"
     },
     {
-      "id": "EVT_08", "phase_req": "All",
+      "id": "EVT_08", "phase_req": "Late",
       "title": "鑽石礦脈大爆發", "description": "地質學家在深層地底發現了超高純度鑽石層。",
       "effect_text": "本回合擁有「鑽石場 (Diamond Mine)」的玩家，挖礦收益翻倍。",
       "type": "SPECIAL", "logic_key": "DIAMOND_BOOST"
     },
     {
-      "id": "EVT_09", "phase_req": "All",
+      "id": "EVT_09", "phase_req": "Late",
       "title": "反壟斷法案", "description": "政府決心打擊寡頭壟斷。",
       "effect_text": "資產稅：現金持有量最高的 3 名玩家，必須繳納 30% 現金，平分給其他玩家。",
       "type": "SPECIAL", "logic_key": "ROBIN_HOOD_TAX"
@@ -199,40 +201,63 @@
   ],
   "gov_acquisitions": [
     {
-      "id": "E-01", "phase_req": "Early", "title": "邊境哨站擴建", "targets": ["beam", "wafer"], "limit_type": "UNLIMITED", "limit": 0
+      "id": "E-01", "phase_req": "Early", "title": "邊境哨站擴建", 
+      "description": "聯邦邊境近期遭受未知勢力頻繁襲擊，當局急需基礎建材與晶片來強化邊境哨站的防禦工事。",
+      "targets": ["beam", "wafer"], "limit_type": "UNLIMITED", "limit": 0
     },
     {
-      "id": "E-02", "phase_req": "Early", "title": "星際通訊網鋪設", "targets": ["wafer", "fuel"], "limit_type": "GLOBAL", "limit": 8
+      "id": "E-02", "phase_req": "Early", "title": "星際通訊網鋪設", 
+      "description": "為了確保星際航線的通訊無死角，政府正在大規模鋪設新型通訊中繼站，現正高價徵收晶片與固態燃料。",
+      "targets": ["wafer", "fuel"], "limit_type": "GLOBAL", "limit": 8
     },
     {
-      "id": "E-03", "phase_req": "Early", "title": "能源儲備法令", "targets": ["fuel", "beam"], "limit_type": "PLAYER", "limit": 2
+      "id": "E-03", "phase_req": "Early", "title": "能源儲備法令", 
+      "description": "鑑於近期能源價格波動，聯邦政府發布緊急儲備法令，要求各星系擴建燃料儲存庫，急需相關物資。",
+      "targets": ["fuel", "beam"], "limit_type": "PLAYER", "limit": 2
     },
     {
-      "id": "M-01", "phase_req": "Mid", "title": "第一次艦隊重組", "targets": ["thruster", "shield"], "limit_type": "UNLIMITED", "limit": 0
+      "id": "M-01", "phase_req": "Mid", "title": "第一次艦隊重組", 
+      "description": "軍方正進行大規模的星際艦隊現代化升級作業，對推進器與磁場護盾的需求量激增，預算無上限。",
+      "targets": ["thruster", "shield"], "limit_type": "UNLIMITED", "limit": 0
     },
     {
-      "id": "M-02", "phase_req": "Mid", "title": "殖民地文化復興", "targets": ["projector", "scanner"], "limit_type": "MIXED", "limits": {"projector": 999, "scanner": 5}
+      "id": "M-02", "phase_req": "Mid", "title": "殖民地文化復興", 
+      "description": "政府推動邊陲殖民地的文化與醫療發展計畫，大量採購全息投影儀與生物掃描儀以提升居民生活品質。",
+      "targets": ["projector", "scanner"], "limit_type": "MIXED", "limits": {"projector": 999, "scanner": 5}
     },
     {
-      "id": "M-03", "phase_req": "Mid", "title": "深空採礦潮", "targets": ["drone", "thruster"], "limit_type": "PLAYER", "limit": 3
+      "id": "M-03", "phase_req": "Mid", "title": "深空採礦潮", 
+      "description": "聯邦探測艦隊在深空發現富含珍稀礦脈的小行星帶，官方正緊急徵調採礦無人機與離子推進器投入開採。",
+      "targets": ["drone", "thruster"], "limit_type": "PLAYER", "limit": 3
     },
     {
-      "id": "M-04", "phase_req": "Mid", "title": "邊境動盪", "targets": ["shield", "laser"], "limit_type": "GLOBAL", "limit": 12
+      "id": "M-04", "phase_req": "Mid", "title": "邊境動盪", 
+      "description": "星區邊緣的叛軍活動日益猖獗，軍方宣布進入二級戒備狀態，急需高能雷射與磁場護盾以裝備鎮壓部隊。",
+      "targets": ["shield", "laser"], "limit_type": "GLOBAL", "limit": 12
     },
     {
-      "id": "L-01", "phase_req": "Late", "title": "方舟計畫", "targets": ["warp_core", "star_conv", "thruster", "shield"], "limit_type": "MIXED", "limits": {"warp_core": 2, "star_conv": 2, "thruster": 999, "shield": 999}
+      "id": "L-01", "phase_req": "Late", "title": "方舟計畫", 
+      "description": "為應對可能的宇宙級災難，聯邦最高機密的「方舟計畫」正式啟動。急需曲速引擎與恆星轉換器等頂級科技設備。",
+      "targets": ["warp_core", "star_conv", "thruster", "shield"], "limit_type": "MIXED", "limits": {"warp_core": 2, "star_conv": 2, "thruster": 999, "shield": 999}
     },
     {
-      "id": "L-02", "phase_req": "Late", "title": "天網防禦系統", "targets": ["quantum", "elevator", "projector"], "limit_type": "MIXED", "limits": {"quantum": 3, "elevator": 3, "projector": 5}
+      "id": "L-02", "phase_req": "Late", "title": "天網防禦系統", 
+      "description": "首都星系正在構築絕對防禦網，需要量子通訊設備與太空電梯組件來完成這個史無前例的巨型工程。",
+      "targets": ["quantum", "elevator", "projector"], "limit_type": "MIXED", "limits": {"quantum": 3, "elevator": 3, "projector": 5}
     },
     {
-      "id": "L-03", "phase_req": "Late", "title": "第二家園計畫", "targets": ["terraform", "thruster", "shield"], "limit_type": "MIXED", "limits": {"terraform": 1, "thruster": 999, "shield": 999}
+      "id": "L-03", "phase_req": "Late", "title": "第二家園計畫", 
+      "description": "聯邦探險隊發現了高度適居的類地行星，現正大量籌措行星改造器與運輸艦隊的護盾及推進設備，準備進行大規模殖民。",
+      "targets": ["terraform", "thruster", "shield"], "limit_type": "MIXED", "limits": {"terraform": 1, "thruster": 999, "shield": 999}
     },
     {
-      "id": "L-04", "phase_req": "Late", "title": "意識永生法案", "targets": ["upload", "projector"], "limit_type": "MIXED", "limits": {"upload": 3, "projector": 999}
+      "id": "L-04", "phase_req": "Late", "title": "意識永生法案", 
+      "description": "議會正式通過意識上傳合法化，官方機構正大舉採購意識上傳晶片與高階投影設備，以建立首座虛擬公民城市。",
+      "targets": ["upload", "projector"], "limit_type": "MIXED", "limits": {"upload": 3, "projector": 999}
     },
     {
       "id": "L-05", "phase_req": "Late", "title": "全面戰爭總動員", 
+      "description": "外星未知文明主力艦隊已突破聯邦第一防線！最高議會發布最高級別總動員令，無限期、無限制收購所有高階軍工與科技物資！",
       "targets": ["quantum", "upload", "elevator", "terraform", "warp_core", "star_conv", "processor", "projector", "scanner", "thruster", "drone", "chassis", "reactor", "laser", "shield"], 
       "limit_type": "MIXED", 
       "limits": {"quantum": 1, "upload": 1, "elevator": 1, "terraform": 1, "warp_core": 1, "star_conv": 1, "processor": 999, "projector": 999, "scanner": 999, "thruster": 999, "drone": 999, "chassis": 999, "reactor": 999, "laser": 999, "shield": 999}

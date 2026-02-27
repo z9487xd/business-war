@@ -85,26 +85,26 @@ async def register_player(data: RegisterModel):
     new_id = str(uuid.uuid4())
     init_factory = Factory(id=str(uuid.uuid4())[:8], tier=0, name="Miner")
 
-    # #測試用
-    # test_t2_factory = Factory(id=str(uuid.uuid4())[:8], tier=2, name="Factory")
-    # cheat_inventory = {k: 50 for k in config.ITEMS.keys()}
-    # new_player = PlayerState(
-    #     id=new_id,
-    #     name=data.name,
-    #     money=1000000, # 🌟 測試用：直接給一百萬初始資金 (原本是 config.INITIAL_MONEY)
-    #     inventory=cheat_inventory, # 🌟 測試用：載入作弊庫存
-    #     factories=[init_factory, test_t2_factory], # 🌟 把 T2 工廠加進初始設施列表裡
-    #     land_limit=config.INITIAL_LAND
-    # )
-    # #...
+    #測試用
+    test_t2_factory = Factory(id=str(uuid.uuid4())[:8], tier=2, name="Factory")
+    cheat_inventory = {k: 50 for k in config.ITEMS.keys()}
     new_player = PlayerState(
         id=new_id,
         name=data.name,
-        money=config.INITIAL_MONEY,
-        inventory={k: 0 for k in config.ITEMS.keys()},
-        factories=[init_factory],
+        money=1000000, # 🌟 測試用：直接給一百萬初始資金 (原本是 config.INITIAL_MONEY)
+        inventory=cheat_inventory, # 🌟 測試用：載入作弊庫存
+        factories=[init_factory, test_t2_factory], # 🌟 把 T2 工廠加進初始設施列表裡
         land_limit=config.INITIAL_LAND
     )
+
+    # new_player = PlayerState(
+    #     id=new_id,
+    #     name=data.name,
+    #     money=config.INITIAL_MONEY,
+    #     inventory={k: 0 for k in config.ITEMS.keys()},
+    #     factories=[init_factory],
+    #     land_limit=config.INITIAL_LAND
+    # )
     
     players[new_id] = new_player
     log_event(f"玩家註冊: {data.name} 加入了遊戲")
@@ -259,20 +259,21 @@ async def next_phase():
 
     if current_phase == 3:
         # 🌟 核心修改：接收撮合引擎回傳的交易日誌 (List[str])
-        auction_logs = engine.execute_call_auction(players)
+        auction_logs = engine.match_market_orders(players)
         
-        # 如果有交易成功，就把每一筆交易印到 Admin 廣播日誌上
+        # 如果有日誌，就把每一筆交易結果與失敗原因印到 Admin 廣播日誌上
         if auction_logs:
             for alog in auction_logs:
                 log_event(alog)
                 
         current_phase = 4
-        log_event("市場撮合完成，進入結算階段")
+        log_event("=== 市場撮合完成，進入第 4 階段：結算階段 ===")
         
         # 呼叫結算機制 (扣稅、事件懲罰、複利)
         end_turn_logs = engine.process_end_of_turn(players)
-        for l in end_turn_logs:
-            log_event(l)
+        if end_turn_logs:
+            for l in end_turn_logs:
+                log_event(l)
             
     elif current_phase == 4:
         for p in players.values():
@@ -288,6 +289,10 @@ async def next_phase():
         engine.generate_daily_event(current_turn)
         current_phase = 1
         log_event(f"=== 第 {current_turn} 回合 開始 ===")
+
+        new_event, phase1_logs = engine.generate_daily_event(current_turn)
+        for log_msg in phase1_logs:
+            log_event(log_msg)
         
     else:
         current_phase += 1

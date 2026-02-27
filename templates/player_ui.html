@@ -19,10 +19,18 @@
             <h1 id="modal-title">新聞標題</h1>
             <hr>
             <p id="modal-desc">新聞內容...</p>
+            
             <div class="news-effect-box">
                 <strong style="color: #f1c40f;">當前影響：</strong><br>
                 <span id="modal-effect" style="font-size: 1.1em;">影響說明</span>
             </div>
+            
+            <div id="modal-gov-box" class="hidden" style="margin-top: 15px; padding: 15px; background: rgba(41, 128, 185, 0.2); border: 2px dashed #3498db; border-radius: 8px;">
+                <h3 style="color: #3498db; margin-top: 0; margin-bottom: 10px;">[官方] 政府緊急收購案</h3>
+                <p id="modal-gov-desc" style="margin: 5px 0; color: #ecf0f1;"></p>
+                <strong style="color: #f1c40f; display: block; margin-top: 10px;">收購目標：<span id="modal-gov-targets"></span></strong>
+            </div>
+            
             <div class="news-phase-indicator">(您可以關閉此視窗查看庫存)</div>
         </div>
     </div>
@@ -82,24 +90,23 @@
                     <strong>【鐵系】</strong>T2:推進器,採礦機,底盤 | T3:太空電梯,行星改造<br>
                     <strong>【能源系】</strong>T2:反應堆,雷射,護盾 | T3:曲速引擎,恆星轉換
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                    <button class="btn" style="background: #27ae60; margin:0;" onclick="openWarehouseModal('special_land')">
-                        擴充土地<br><small style="opacity:0.85">3種不同 T3 * 1</small>
-                    </button>
-                    <button class="btn" style="background: #2980b9; margin:0;" onclick="openWarehouseModal('special_diamond')">
-                        鑽石場<br><small style="opacity:0.85">矽晶T2*4 + 鐵T2*4</small>
-                    </button>
-                    <button class="btn" style="background: #d35400; margin:0;" onclick="openWarehouseModal('special_defense')">
-                        防災系統<br><small style="opacity:0.85">鐵T3*1 + 能源T3*2</small>
-                    </button>
-                    <button class="btn" style="background: #f1c40f; color: #000; margin:0;" onclick="openWarehouseModal('special_omni')">
-                        萬能工廠<br><small style="opacity:0.85">能源T3*3</small>
-                    </button>
-                    <button class="btn" style="background: #c0392b; margin:0;" onclick="openWarehouseModal('special_accelerator')">
-                        加速器<br><small style="opacity:0.85">鐵T3*2 + 能源T3*1</small>
+                
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <select id="special-build-select" style="padding: 10px; font-size: 1em; background: #222; color: #fff; border: 1px solid #7f8c8d; border-radius: 5px;">
+                        <option value="special_land">擴充土地 (需 3種不同 T3 * 1)</option>
+                        <option value="special_diamond">鑽石場 (需 矽晶T2*4 + 鐵T2*4)</option>
+                        <option value="special_prophet">預言家 (需 矽晶T3*3)</option>
+                        <option value="special_defense">防災系統 (需 鐵T3*1 + 能源T3*2)</option>
+                        <option value="special_omni">萬能工廠 (需 能源T3*3)</option>
+                        <option value="special_accelerator">加速器 (需 鐵T3*2 + 能源T3*1)</option>
+                    </select>
+                    
+                    <button class="btn" style="background: #9b59b6; margin: 0; padding: 12px; font-size: 1.1em;" onclick="openWarehouseModal(document.getElementById('special-build-select').value)">
+                        建造所選設施
                     </button>
                 </div>
             </div>
+            
             <div class="card">
                 <h4 style="margin-top: 0;">3. 我的設施 (Facilities)</h4>
                 <div id="factory-list"></div>

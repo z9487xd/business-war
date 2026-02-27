@@ -1,8 +1,13 @@
-1. 開一個terminal，cd到你的資料夾位置，複製下面的指令貼上去跑: 
-uvicorn main:app --host 0.0.0.0 --port 8000
+ngrok使用方法
 
-2. 開另外一個terminal，複製下面這行指令貼上去跑:
-cloudflared tunnel --url http://localhost:8000
+1. 註冊帳號：前往 Ngrok 官網 (ngrok.com)，點擊右上角的 Sign Up，可以直接用 Google 或 GitHub 帳號快速登入。
 
-admin terminal web:
-http://localhost:8000/admin
+2. 取得授權碼 (Authtoken)：登入後，在左側選單找到「Getting Started」底下的「Your Authtoken」。你會看到一串很長的英數字密碼，請把它複製起來。
+
+3. 下載程式：在左側選單點擊「Setup & Installation」，下載 Windows 版本的 Ngrok (通常是一個 zip 壓縮檔)。
+
+4. 解壓縮：將下載下來的壓縮檔解壓縮，裡面會有一個 ngrok.exe 檔案。請把這個 ngrok.exe 直接拖曳放到你的「專案資料夾」裡面 (也就是跟 main.py 還有你的 .bat 放在同一個地方)。
+
+5. 綁定授權碼：在你的專案資料夾上方網址列輸入 cmd 按 Enter 打開終端機，然後貼上以下指令並執行 (請把 <你的授權碼> 換成步驟 2 複製的那串密碼)： ngrok config add-authtoken <你的授權碼>
+
+看到 "Authtoken saved to configuration file" 就代表綁定成功，可以把這個視窗關掉了。
